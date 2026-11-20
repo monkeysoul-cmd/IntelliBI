@@ -1,0 +1,28 @@
+services:
+  intellibi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-4-hydrogen}
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
+      - MAX_QUERY_ROWS=${MAX_QUERY_ROWS:-250}
+      - QUERY_TIMEOUT_MS=${QUERY_TIMEOUT_MS:-5000}
+      - PGLITE_DATA_DIR=/data/pgdata
+    volumes:
+      - intellibi_pgdata:/data/pgdata
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  intellibi_pgdata:

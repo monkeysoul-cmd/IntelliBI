@@ -1,0 +1,6 @@
+{
+  "name": "IntelliBI – Autonomous AI Data Analyst",
+  "description": "Autonomous AI business intelligence platform that translates natural language questions into validated PostgreSQL queries, statistical insights, and interactive visualizations using a multi-agent workflow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
