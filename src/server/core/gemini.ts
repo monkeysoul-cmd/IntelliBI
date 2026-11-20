@@ -15,9 +15,6 @@ export function getGeminiClient(): GoogleGenAI {
       apiKey,
       httpOptions: {
         timeout: 25000,
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
       },
     });
   }
