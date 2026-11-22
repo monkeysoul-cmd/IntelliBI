@@ -20,8 +20,7 @@ IntelliBI is a full-stack AI business intelligence platform that enables busines
 
 ```bash
 npm install
-cp .env.example .env
-# Set GEMINI_API_KEY in .env
+# Create .env and set GEMINI_API_KEY
 npm run dev
 ```
 
