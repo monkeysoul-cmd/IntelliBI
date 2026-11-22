@@ -11,7 +11,17 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowRight, ArrowUpRight, MessageSquareText, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Bot,
+  DollarSign,
+  Package,
+  ShoppingBag,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 import { dashboardApi } from '../services/api';
 import type {
   DashboardKpis,
@@ -20,8 +30,7 @@ import type {
   RegionMetricRow,
   RevenueSeriesPoint,
 } from '../types/api';
-import { useAuth } from '../context/AuthContext';
-import { Button, Skeleton, Surface } from '../components/ui/Primitives';
+import { Badge, Button, Skeleton, Surface } from '../components/ui/Primitives';
 import {
   formatCurrency,
   formatDateTime,
@@ -39,7 +48,6 @@ const QUICK_SUGGESTIONS = [
 ];
 
 export function OverviewPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [yearFilter, setYearFilter] = useState<'all' | '2026' | '2025'>('all');
@@ -88,25 +96,29 @@ export function OverviewPage() {
           label: 'Total Revenue',
           value: formatCurrency(kpis.totalRevenue),
           delta: kpis.revenueGrowthPct,
-          meta: '2026 YTD vs 2025',
+          meta: 'vs prior year period',
+          icon: DollarSign,
         },
         {
           label: 'Total Orders',
           value: formatNumber(kpis.totalOrders),
           delta: kpis.ordersGrowthPct,
-          meta: 'Non-cancelled orders',
+          meta: 'Completed fulfillment',
+          icon: ShoppingBag,
         },
         {
           label: 'Total Customers',
           value: formatNumber(kpis.totalCustomers),
           delta: null,
-          meta: `${kpis.activeBuyers} active buyers · ${kpis.newCustomers2026} joined in 2026`,
+          meta: `${kpis.activeBuyers} active buyers · ${kpis.newCustomers2026} new`,
+          icon: Users,
         },
         {
           label: 'Average Order Value',
           value: formatCurrency(kpis.avgOrderValue),
           delta: kpis.aovGrowthPct,
-          meta: 'Net order average',
+          meta: 'Net revenue per order',
+          icon: Package,
         },
       ]
     : [];
@@ -114,21 +126,22 @@ export function OverviewPage() {
   const totalRegionalRev = regions.reduce((sum, r) => sum + r.revenue, 0) || 1;
 
   return (
-    <div className="space-y-8">
-      {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
             Executive Overview
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Welcome back, {user?.name?.split(' ')[0] || 'Analyst'}. Live business metrics calculated directly from PostgreSQL.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Real-time business performance calculated directly from PostgreSQL
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Segmented Timeframe Switcher */}
           <div
-            className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80"
+            className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.08]"
             role="tablist"
             aria-label="Overview timeframe filter"
           >
@@ -139,10 +152,10 @@ export function OverviewPage() {
                 role="tab"
                 aria-selected={yearFilter === yr}
                 onClick={() => setYearFilter(yr)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   yearFilter === yr
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
                 {yr === 'all' ? 'All Time' : yr}
@@ -150,9 +163,9 @@ export function OverviewPage() {
             ))}
           </div>
 
-          <Button variant="primary" onClick={() => navigate('/analyst')}>
-            <MessageSquareText className="w-4 h-4" />
-            Ask AI Analyst
+          <Button variant="primary" size="sm" onClick={() => navigate('/analyst')}>
+            <Bot className="w-3.5 h-3.5" />
+            <span>Ask AI Analyst</span>
           </Button>
         </div>
       </div>
@@ -160,65 +173,75 @@ export function OverviewPage() {
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 text-sm text-red-700 dark:text-red-300"
+          className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300"
         >
           {error}
         </div>
       )}
 
-      {/* 4-Column KPI Strip */}
-      <section aria-label="Key performance indicators" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* 4-Column KPI Cards */}
+      <section aria-label="Key performance indicators" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Surface key={i} className="p-5 space-y-3">
-                <Skeleton className="h-3.5 w-24" />
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-3 w-40" />
+              <Surface key={i} className="p-4.5 space-y-3">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-7 w-28" />
+                <Skeleton className="h-2.5 w-36" />
               </Surface>
             ))
-          : kpiCards.map((card) => (
-              <Surface key={card.label} className="p-5 flex flex-col justify-between">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {card.label}
-                  </span>
-                  {card.delta !== null && (
-                    <span
-                      className={`inline-flex items-center gap-0.5 text-xs font-mono tabular-nums font-medium ${
-                        card.delta >= 0
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      {card.delta >= 0 ? (
-                        <TrendingUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <TrendingDown className="w-3.5 h-3.5" />
-                      )}
-                      {formatPercent(card.delta)}
-                    </span>
-                  )}
-                </div>
+          : kpiCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Surface key={card.label} hover className="p-4.5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {card.label}
+                      </span>
+                      <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.05] flex items-center justify-center text-slate-500 dark:text-slate-400">
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
 
-                <div className="mt-3 text-2xl sm:text-3xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-                  {card.value}
-                </div>
+                    <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+                      {card.value}
+                    </div>
+                  </div>
 
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{card.meta}</p>
-              </Surface>
-            ))}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.05] flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-slate-400 dark:text-slate-500 truncate">{card.meta}</span>
+                    {card.delta !== null && (
+                      <span
+                        className={`inline-flex items-center gap-1 font-mono tabular-nums font-semibold shrink-0 ${
+                          card.delta >= 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
+                        }`}
+                      >
+                        {card.delta >= 0 ? (
+                          <TrendingUp className="w-3 h-3" />
+                        ) : (
+                          <TrendingDown className="w-3 h-3" />
+                        )}
+                        {formatPercent(card.delta)}
+                      </span>
+                    )}
+                  </div>
+                </Surface>
+              );
+            })}
       </section>
 
-      {/* Primary Charts Grid: Revenue Trend + Monthly Order Volume */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <Surface className="xl:col-span-7 p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
+      {/* Primary Charts Strip: Revenue Trend + Monthly Order Volume */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <Surface className="xl:col-span-7 p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Revenue Trend
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+                Revenue Trajectory
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Monthly realized revenue excluding cancelled orders
+                Monthly realized gross revenue excluding cancellations
               </p>
             </div>
             <button
@@ -228,53 +251,60 @@ export function OverviewPage() {
                   `/analyst?q=${encodeURIComponent('Show monthly revenue trends for the previous year.')}`
                 )
               }
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              Analyze trend
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>Analyze in AI</span>
+              <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
 
           {loading ? (
-            <Skeleton className="h-[270px] w-full" />
+            <Skeleton className="h-[260px] w-full" />
           ) : (
-            <div className="h-[270px] w-full">
+            <div className="h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueSeries} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+                <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: -15, bottom: 0 }}>
                   <defs>
                     <linearGradient id="overviewRevGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.22} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.22)" vertical={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="currentColor"
+                    className="text-slate-200/80 dark:text-white/[0.06]"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                    axisLine={{ stroke: 'rgba(148,163,184,0.28)' }}
+                    tick={{ fontSize: 10, fill: 'currentColor' }}
+                    className="text-slate-400 dark:text-slate-500 font-mono"
+                    axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(v) => formatCurrency(Number(v), true)}
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 10, fill: 'currentColor' }}
+                    className="text-slate-400 dark:text-slate-500 font-mono"
                     axisLine={false}
                     tickLine={false}
-                    width={62}
+                    width={56}
                   />
                   <Tooltip
                     formatter={(val) => [formatCurrency(Number(val)), 'Revenue']}
                     contentStyle={{
-                      backgroundColor: '#0F172A',
-                      borderColor: '#1E293B',
-                      borderRadius: 8,
-                      color: '#F8FAFC',
-                      fontSize: 12,
+                      backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '12px',
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#2563EB"
+                    stroke="#3B82F6"
                     strokeWidth={2}
                     fill="url(#overviewRevGrad)"
                   />
@@ -284,47 +314,54 @@ export function OverviewPage() {
           )}
         </Surface>
 
-        <Surface className="xl:col-span-5 p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
+        <Surface className="xl:col-span-5 p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Monthly Order Volume
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+                Monthly Orders
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Fulfilled and active orders per month
+                Completed volume per calendar period
               </p>
             </div>
           </div>
 
           {loading ? (
-            <Skeleton className="h-[270px] w-full" />
+            <Skeleton className="h-[260px] w-full" />
           ) : (
-            <div className="h-[270px] w-full">
+            <div className="h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueSeries.slice(-12)} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.22)" vertical={false} />
+                <BarChart data={revenueSeries.slice(-12)} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="currentColor"
+                    className="text-slate-200/80 dark:text-white/[0.06]"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                    axisLine={{ stroke: 'rgba(148,163,184,0.28)' }}
+                    tick={{ fontSize: 10, fill: 'currentColor' }}
+                    className="text-slate-400 dark:text-slate-500 font-mono"
+                    axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 10, fill: 'currentColor' }}
+                    className="text-slate-400 dark:text-slate-500 font-mono"
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(val) => [formatNumber(Number(val)), 'Orders']}
                     contentStyle={{
-                      backgroundColor: '#0F172A',
-                      borderColor: '#1E293B',
-                      borderRadius: 8,
-                      color: '#F8FAFC',
-                      fontSize: 12,
+                      backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '12px',
                     }}
                   />
-                  <Bar dataKey="orders" fill="#0D9488" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="orders" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -332,29 +369,29 @@ export function OverviewPage() {
         </Surface>
       </section>
 
-      {/* Secondary Row: Top-Selling Products + Regional Sales Comparison */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <Surface className="xl:col-span-7 p-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Secondary Strip: Top Products Table + Regional Distribution */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <Surface className="xl:col-span-7 p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Top-Selling Products
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+                Top Products by Revenue
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Ranked by realized line-item revenue
+                Ranked by line-item realized revenue
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/dashboards')}
-              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              View all products
+              View catalog
             </button>
           </div>
 
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
@@ -363,32 +400,41 @@ export function OverviewPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <th className="pb-2.5 pr-4">Product</th>
-                    <th className="pb-2.5 px-3 text-right">Units</th>
-                    <th className="pb-2.5 px-3 text-right">Margin</th>
-                    <th className="pb-2.5 pl-3 text-right">Revenue</th>
+                  <tr className="border-b border-slate-100 dark:border-white/[0.06] text-[11px] font-mono text-slate-400">
+                    <th className="pb-2 font-medium">Product</th>
+                    <th className="pb-2 px-3 text-right font-medium">Units</th>
+                    <th className="pb-2 px-3 text-right font-medium">Margin</th>
+                    <th className="pb-2 pl-3 text-right font-medium">Revenue</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
-                  {topProducts.map((p) => (
+                <tbody className="divide-y divide-slate-100/70 dark:divide-white/[0.04] text-xs">
+                  {topProducts.map((p, idx) => (
                     <tr
                       key={p.product_id}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                      className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-3 pr-4">
-                        <p className="font-medium text-slate-900 dark:text-slate-100 leading-snug">
-                          {p.product_name}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{p.category}</p>
+                      <td className="py-2.5 pr-4">
+                        <div className="flex items-center gap-2">
+                          <span className="w-4.5 h-4.5 rounded text-[10px] font-mono font-semibold flex items-center justify-center bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 shrink-0">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                              {p.product_name}
+                            </p>
+                            <span className="text-[10px] text-slate-400 font-sans">
+                              {p.category}
+                            </span>
+                          </div>
+                        </div>
                       </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums text-xs text-slate-600 dark:text-slate-300">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
                         {formatNumber(p.units_sold)}
                       </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums text-xs text-emerald-700 dark:text-emerald-400">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
                         {p.margin_pct.toFixed(1)}%
                       </td>
-                      <td className="py-3 pl-3 text-right font-mono tabular-nums text-sm font-semibold text-slate-900 dark:text-white">
+                      <td className="py-2.5 pl-3 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(p.revenue)}
                       </td>
                     </tr>
@@ -399,49 +445,45 @@ export function OverviewPage() {
           )}
         </Surface>
 
-        <Surface className="xl:col-span-5 p-6">
-          <div className="mb-5">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Regional Sales Comparison
+        <Surface className="xl:col-span-5 p-5">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+              Regional Sales Distribution
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Revenue share, customer count, and average order value by territory
+              Revenue proportion, customer base, and average ticket size
             </p>
           </div>
 
           {loading ? (
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {regions.map((r) => {
                 const share = (r.revenue / totalRegionalRev) * 100;
                 return (
-                  <div key={r.region} className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-2 text-sm">
-                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                  <div key={r.region} className="space-y-1">
+                    <div className="flex items-baseline justify-between gap-2 text-xs">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
                         {r.region}
                       </span>
                       <span className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(r.revenue)}
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
+                        className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300"
                         style={{ width: `${Math.max(4, Math.min(100, share))}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                      <span>
-                        {r.customers} accounts · {r.orders} orders
-                      </span>
-                      <span>
-                        {share.toFixed(1)}% · AOV {formatCurrency(r.avg_order_value)}
-                      </span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono tabular-nums">
+                      <span>{r.customers} accounts · {r.orders} orders</span>
+                      <span>{share.toFixed(1)}% · AOV {formatCurrency(r.avg_order_value)}</span>
                     </div>
                   </div>
                 );
@@ -451,95 +493,94 @@ export function OverviewPage() {
         </Surface>
       </section>
 
-      {/* Bottom Row: Recent AI Activity + Suggested Business Questions */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <Surface className="xl:col-span-7 p-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Bottom Strip: Recent Queries & Quick Prompts */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <Surface className="xl:col-span-7 p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                Recent Analytical Queries
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+                Recent AI Analytical Inquiries
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Click any query to reopen its SQL, visualization, and insights
+                Audit trail of natural language questions and execution metrics
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/history')}
-              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              Full history
+              Full log
             </button>
           </div>
 
           {recentQueries.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              No queries run yet. Ask your first analytical question to build history.
+            <div className="py-8 text-center text-xs text-slate-400">
+              No queries logged yet. Launch a question in the AI Analyst to build audit history.
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <div className="divide-y divide-slate-100 dark:divide-white/[0.05]">
               {recentQueries.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => navigate(`/analyst?historyId=${item.id}`)}
-                  className="w-full py-3 text-left flex items-start justify-between gap-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 -mx-2 px-2 rounded-lg transition-colors cursor-pointer"
+                  className="w-full py-2.5 text-left flex items-start justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] -mx-1 px-1 rounded-lg transition-colors cursor-pointer group"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                       {item.question}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={
+                    <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5 font-mono">
+                      <Badge
+                        variant={
                           item.executionStatus === 'succeeded'
-                            ? 'text-emerald-700 dark:text-emerald-400 font-medium'
+                            ? 'emerald'
                             : item.executionStatus === 'blocked'
-                              ? 'text-amber-700 dark:text-amber-400 font-medium'
-                              : 'text-red-600 dark:text-red-400 font-medium'
+                              ? 'amber'
+                              : 'rose'
                         }
+                        dot
                       >
-                        {item.executionStatus === 'succeeded'
-                          ? 'Succeeded'
-                          : item.executionStatus === 'blocked'
-                            ? 'Blocked'
-                            : 'Needs review'}
-                      </span>
+                        {item.executionStatus}
+                      </Badge>
                       <span aria-hidden="true">·</span>
-                      <span className="font-mono tabular-nums">{item.rowCount} rows</span>
+                      <span className="tabular-nums">{item.rowCount} rows</span>
                       <span aria-hidden="true">·</span>
-                      <span className="font-mono tabular-nums">{item.executionTimeMs}ms</span>
+                      <span className="tabular-nums">{item.executionTimeMs}ms</span>
                       <span aria-hidden="true">·</span>
-                      <span>{formatDateTime(item.createdAt)}</span>
-                    </p>
+                      <span className="font-sans">{formatDateTime(item.createdAt)}</span>
+                    </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0 mt-1" />
                 </button>
               ))}
             </div>
           )}
         </Surface>
 
-        <Surface className="xl:col-span-5 p-6">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Quick Business Questions
+        <Surface className="xl:col-span-5 p-5">
+          <div className="mb-3">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+              Autonomous Prompt Deck
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Launch an autonomous multi-agent SQL analysis in one click
+              Instant multi-agent SQL execution prompts
             </p>
           </div>
 
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+          <div className="space-y-1.5">
             {QUICK_SUGGESTIONS.map((q) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => navigate(`/analyst?q=${encodeURIComponent(q)}`)}
-                className="w-full py-2.5 text-left flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                className="w-full p-2.5 text-left flex items-center justify-between gap-2.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.06] hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 text-slate-700 dark:text-slate-300 transition-all cursor-pointer group"
               >
-                <span className="leading-snug">{q}</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="leading-snug truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  {q}
+                </span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0" />
               </button>
             ))}
           </div>
