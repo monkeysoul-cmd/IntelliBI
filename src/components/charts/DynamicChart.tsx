@@ -16,9 +16,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BarChart3, LineChart as LineIcon, PieChart as PieIcon, Search, Table2, TrendingUp } from 'lucide-react';
+import {
+  AreaChart as AreaIcon,
+  BarChart3,
+  Download,
+  LineChart as LineIcon,
+  PieChart as PieIcon,
+  Search,
+  Table2,
+} from 'lucide-react';
 import type { ChartType, VisualizationConfig } from '../../types/api';
 import {
+  downloadCsvFile,
   formatCellValue,
   formatColumnHeader,
   formatCurrency,
@@ -26,7 +35,15 @@ import {
 } from '../../utils/formatters';
 import { cn } from '../../utils/cn';
 
-const SERIES_COLORS = ['#2563EB', '#0D9488', '#475569', '#D97706', '#7C3AED', '#DC2626'];
+const SERIES_COLORS = [
+  '#3B82F6', // Electric Sapphire
+  '#10B981', // Emerald
+  '#8B5CF6', // Violet
+  '#F59E0B', // Amber
+  '#EC4899', // Rose
+  '#06B6D4', // Cyan
+  '#64748B', // Slate
+];
 
 interface DynamicChartProps {
   config: VisualizationConfig;
@@ -39,7 +56,6 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
   const [activeView, setActiveView] = useState<ChartType>(config.chartType);
   const [tableFilter, setTableFilter] = useState('');
 
-  // Keep active view synced when visualization config changes for a new query
   React.useEffect(() => {
     setActiveView(config.chartType);
     setTableFilter('');
@@ -75,7 +91,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
         normalized[yk] = typeof val === 'number' ? val : Number(val ?? 0);
       }
       const rawLabel = String(row[config.xKey] ?? '');
-      normalized.__shortLabel = rawLabel.length > 24 ? `${rawLabel.slice(0, 22)}…` : rawLabel;
+      normalized.__shortLabel = rawLabel.length > 20 ? `${rawLabel.slice(0, 18)}…` : rawLabel;
       return normalized;
     });
   }, [rows, config.xKey, config.yKeys]);
@@ -102,348 +118,317 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
     return [formatNumber(num), label];
   };
 
-  const viewIcon = (type: ChartType) => {
+  const renderViewIcon = (type: ChartType) => {
     switch (type) {
       case 'area':
-        return <TrendingUp className="w-3.5 h-3.5" />;
-      case 'line':
-        return <LineIcon className="w-3.5 h-3.5" />;
+        return <AreaIcon className="w-3.5 h-3.5" />;
       case 'bar':
         return <BarChart3 className="w-3.5 h-3.5" />;
+      case 'line':
+        return <LineIcon className="w-3.5 h-3.5" />;
       case 'pie':
         return <PieIcon className="w-3.5 h-3.5" />;
       case 'table':
-      default:
         return <Table2 className="w-3.5 h-3.5" />;
+      default:
+        return <BarChart3 className="w-3.5 h-3.5" />;
     }
   };
 
-  if (rows.length === 0) {
-    return (
-      <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-        No matching rows returned from PostgreSQL for this query.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-            {config.title}
-          </h4>
-          {config.subtitle && (
+    <div className="space-y-3">
+      {/* Chart Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-slate-100 dark:border-white/[0.06]">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+            {config.title || 'Analytics Visualization'}
+          </h3>
+          {config.description && (
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {config.subtitle}
+              {config.description}
             </p>
           )}
         </div>
 
+        {/* View Switcher Tabs */}
         {availableViews.length > 1 && (
-          <div
-            className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80"
-            role="tablist"
-            aria-label="Visualization display mode"
-          >
-            {availableViews.map((mode) => (
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/70 dark:border-white/[0.08]">
+            {availableViews.map((v) => (
               <button
-                key={mode}
+                key={v}
                 type="button"
-                role="tab"
-                aria-selected={activeView === mode}
-                onClick={() => setActiveView(mode)}
+                onClick={() => setActiveView(v)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer',
-                  activeView === mode
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                  'flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer',
+                  activeView === v
+                    ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                 )}
               >
-                {viewIcon(mode)}
-                <span className="capitalize">{mode === 'kpi' ? 'KPI' : mode}</span>
+                {renderViewIcon(v)}
+                <span className="capitalize">{v}</span>
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* KPI Single Aggregate View */}
-      {activeView === 'kpi' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
-          {config.yKeys.map((metricKey) => {
-            const rawVal = Number(rows[0]?.[metricKey] ?? 0);
-            return (
-              <div
-                key={metricKey}
-                className="p-5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800"
-              >
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {formatColumnHeader(metricKey)}
-                </p>
-                <p className="mt-2 text-3xl font-semibold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-                  {formatCellValue(metricKey, rawVal)}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Area Chart */}
-      {activeView === 'area' && (
-        <div style={{ width: '100%', height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 6, bottom: 4 }}>
-              <defs>
-                {config.yKeys.map((yk, i) => (
-                  <linearGradient key={yk} id={`grad-${i}-${yk}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={SERIES_COLORS[i % SERIES_COLORS.length]} stopOpacity={0.22} />
-                    <stop offset="95%" stopColor={SERIES_COLORS[i % SERIES_COLORS.length]} stopOpacity={0.01} />
-                  </linearGradient>
-                ))}
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.22)" vertical={false} />
-              <XAxis
-                dataKey="__shortLabel"
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={{ stroke: 'rgba(148,163,184,0.28)' }}
-                tickLine={false}
-              />
-              <YAxis
-                tickFormatter={formatAxisTick}
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={false}
-                tickLine={false}
-                width={68}
-              />
-              <Tooltip
-                formatter={formatTooltipVal}
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: 8,
-                  color: '#F8FAFC',
-                  fontSize: 12,
-                }}
-              />
-              {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
-              {config.yKeys.map((yk, idx) => (
-                <Area
-                  key={yk}
-                  type="monotone"
-                  dataKey={yk}
-                  name={formatColumnHeader(yk)}
-                  stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  strokeWidth={2}
-                  fill={`url(#grad-${idx}-${yk})`}
-                  activeDot={{ r: 4 }}
-                />
-              ))}
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Line Chart */}
-      {activeView === 'line' && (
-        <div style={{ width: '100%', height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 10, right: 16, left: 6, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.22)" vertical={false} />
-              <XAxis
-                dataKey="__shortLabel"
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={{ stroke: 'rgba(148,163,184,0.28)' }}
-                tickLine={false}
-              />
-              <YAxis
-                tickFormatter={formatAxisTick}
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={false}
-                tickLine={false}
-                width={68}
-              />
-              <Tooltip
-                formatter={formatTooltipVal}
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: 8,
-                  color: '#F8FAFC',
-                  fontSize: 12,
-                }}
-              />
-              {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
-              {config.yKeys.map((yk, idx) => (
-                <Line
-                  key={yk}
-                  type="monotone"
-                  dataKey={yk}
-                  name={formatColumnHeader(yk)}
-                  stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  strokeWidth={2.2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Bar Chart */}
-      {activeView === 'bar' && (
-        <div style={{ width: '100%', height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 16, left: 6, bottom: 12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.22)" vertical={false} />
-              <XAxis
-                dataKey="__shortLabel"
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={{ stroke: 'rgba(148,163,184,0.28)' }}
-                tickLine={false}
-                interval={0}
-                angle={chartData.length > 6 ? -18 : 0}
-                textAnchor={chartData.length > 6 ? 'end' : 'middle'}
-                height={chartData.length > 6 ? 54 : 30}
-              />
-              <YAxis
-                tickFormatter={formatAxisTick}
-                tick={{ fontSize: 11, fill: '#64748B' }}
-                axisLine={false}
-                tickLine={false}
-                width={68}
-              />
-              <Tooltip
-                formatter={formatTooltipVal}
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: 8,
-                  color: '#F8FAFC',
-                  fontSize: 12,
-                }}
-              />
-              {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
-              {config.yKeys.map((yk, idx) => (
-                <Bar
-                  key={yk}
-                  dataKey={yk}
-                  name={formatColumnHeader(yk)}
-                  fill={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  radius={[5, 5, 0, 0]}
-                  maxBarSize={48}
-                />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Pie / Donut Chart */}
-      {activeView === 'pie' && config.yKeys[0] && (
-        <div style={{ width: '100%', height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                dataKey={config.yKeys[0]}
-                nameKey={config.xKey}
-                cx="50%"
-                cy="50%"
-                innerRadius={64}
-                outerRadius={106}
-                paddingAngle={2}
-              >
-                {chartData.map((_, idx) => (
-                  <Cell key={idx} fill={SERIES_COLORS[idx % SERIES_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={formatTooltipVal}
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: 8,
-                  color: '#F8FAFC',
-                  fontSize: 12,
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Searchable Data Table */}
-      {activeView === 'table' && (
-        <div className="space-y-3">
-          {rows.length > 6 && (
-            <div className="relative max-w-xs">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Render Chart Body */}
+      {activeView === 'table' ? (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={tableFilter}
                 onChange={(e) => setTableFilter(e.target.value)}
-                placeholder="Filter returned rows..."
-                aria-label="Filter returned table rows"
-                className="w-full h-8 pl-8 pr-3 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                placeholder="Filter table rows..."
+                className="w-full h-7.5 pl-8 pr-3 text-xs rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-slate-400">
+                {filteredTableRows.length} rows
+              </span>
+              <button
+                type="button"
+                onClick={() => downloadCsvFile(columns, rows, 'query-export.csv')}
+                className="inline-flex items-center gap-1 h-7.5 px-2.5 text-xs font-medium rounded-md border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                <Download className="w-3 h-3" />
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
-                  {columns.map((col) => {
-                    const isNum = typeof rows[0]?.[col] === 'number';
-                    return (
-                      <th
-                        key={col}
-                        className={cn(
-                          'py-2.5 px-3.5 text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap',
-                          isNum && 'text-right'
-                        )}
-                      >
-                        {formatColumnHeader(col)}
-                      </th>
-                    );
-                  })}
+          <div className="border border-slate-200/80 dark:border-white/[0.07] rounded-lg overflow-x-auto max-h-72">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-50 dark:bg-white/[0.03] text-slate-700 dark:text-slate-300 border-b border-slate-200/80 dark:border-white/[0.07] sticky top-0 z-10">
+                <tr>
+                  {columns.map((col) => (
+                    <th
+                      key={col}
+                      className="px-3 py-2 font-semibold font-mono tracking-tight whitespace-nowrap"
+                    >
+                      {formatColumnHeader(col)}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-                {filteredTableRows.slice(0, 100).map((row, rIdx) => (
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                {filteredTableRows.map((row, idx) => (
                   <tr
-                    key={rIdx}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                    key={idx}
+                    className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
                   >
-                    {columns.map((col) => {
-                      const val = row[col];
-                      const isNum = typeof val === 'number';
-                      return (
-                        <td
-                          key={col}
-                          className={cn(
-                            'py-2.5 px-3.5 text-slate-700 dark:text-slate-200 whitespace-nowrap',
-                            isNum && 'text-right font-mono tabular-nums'
-                          )}
-                        >
-                          {formatCellValue(col, val)}
-                        </td>
-                      );
-                    })}
+                    {columns.map((col) => (
+                      <td
+                        key={col}
+                        className={cn(
+                          'px-3 py-1.5 whitespace-nowrap text-slate-800 dark:text-slate-200',
+                          typeof row[col] === 'number' && 'font-mono tabular-nums'
+                        )}
+                      >
+                        {formatCellValue(row[col])}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {filteredTableRows.length > 100 && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Showing first 100 of {filteredTableRows.length} matching rows. Export CSV to download the full result set.
-            </p>
-          )}
+        </div>
+      ) : (
+        <div style={{ height }} className="w-full relative">
+          <ResponsiveContainer width="100%" height="100%">
+            {activeView === 'area' ? (
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <defs>
+                  {config.yKeys.map((key, i) => {
+                    const color = SERIES_COLORS[i % SERIES_COLORS.length];
+                    return (
+                      <linearGradient key={key} id={`areaGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                        <stop offset="95%" stopColor={color} stopOpacity={0} />
+                      </linearGradient>
+                    );
+                  })}
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  className="text-slate-200 dark:text-white/[0.06]"
+                />
+                <XAxis
+                  dataKey="__shortLabel"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatAxisTick}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <Tooltip
+                  formatter={formatTooltipVal}
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    color: '#fff',
+                    fontSize: '12px',
+                    padding: '8px 12px',
+                  }}
+                />
+                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {config.yKeys.map((key, i) => (
+                  <Area
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={formatColumnHeader(key)}
+                    stroke={SERIES_COLORS[i % SERIES_COLORS.length]}
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill={`url(#areaGrad-${i})`}
+                  />
+                ))}
+              </AreaChart>
+            ) : activeView === 'line' ? (
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  className="text-slate-200 dark:text-white/[0.06]"
+                />
+                <XAxis
+                  dataKey="__shortLabel"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatAxisTick}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <Tooltip
+                  formatter={formatTooltipVal}
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    color: '#fff',
+                    fontSize: '12px',
+                    padding: '8px 12px',
+                  }}
+                />
+                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {config.yKeys.map((key, i) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={formatColumnHeader(key)}
+                    stroke={SERIES_COLORS[i % SERIES_COLORS.length]}
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: SERIES_COLORS[i % SERIES_COLORS.length] }}
+                    activeDot={{ r: 5, strokeWidth: 2 }}
+                  />
+                ))}
+              </LineChart>
+            ) : activeView === 'pie' ? (
+              <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <Tooltip
+                  formatter={formatTooltipVal}
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '12px',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Pie
+                  data={chartData}
+                  dataKey={config.yKeys[0] || 'value'}
+                  nameKey={config.xKey || 'name'}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={88}
+                  paddingAngle={3}
+                >
+                  {chartData.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={SERIES_COLORS[index % SERIES_COLORS.length]}
+                      stroke="transparent"
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            ) : (
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  className="text-slate-200 dark:text-white/[0.06]"
+                />
+                <XAxis
+                  dataKey="__shortLabel"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatAxisTick}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  className="text-slate-400 dark:text-slate-500 font-mono"
+                />
+                <Tooltip
+                  formatter={formatTooltipVal}
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 20, 30, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    color: '#fff',
+                    fontSize: '12px',
+                    padding: '8px 12px',
+                  }}
+                />
+                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {config.yKeys.map((key, i) => (
+                  <Bar
+                    key={key}
+                    dataKey={key}
+                    name={formatColumnHeader(key)}
+                    fill={SERIES_COLORS[i % SERIES_COLORS.length]}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={44}
+                  />
+                ))}
+              </BarChart>
+            )}
+          </ResponsiveContainer>
         </div>
       )}
     </div>
