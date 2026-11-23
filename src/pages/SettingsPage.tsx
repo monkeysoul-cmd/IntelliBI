@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { databaseApi } from '../services/api';
 import type { DatabaseStatusInfo } from '../types/api';
-import { Button, Surface } from '../components/ui/Primitives';
+import { Badge, Button, Surface } from '../components/ui/Primitives';
 
 export function SettingsPage() {
   const { user, settings, updateSettings, logout } = useAuth();
@@ -42,32 +42,36 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+    <div className="max-w-2xl space-y-6">
+      {/* Page Header */}
+      <div className="pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
           Workspace Settings
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Configure SQL execution guardrails, display preferences, and your authenticated analyst account.
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Configure SQL execution guardrails, interface appearance, and account preferences
         </p>
       </div>
 
       {/* Query Execution Guardrails */}
-      <Surface className="p-6 space-y-5">
+      <Surface className="p-5 space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
             SQL Execution Guardrails
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Applied automatically by Node 4 (SQL Validation) and Node 5 (SQL Execution) on every AI-generated query.
+            Enforced by Node 4 (SQL Validation AST) and Node 5 (PostgreSQL Execution) on every query
           </p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="setting-max-rows" className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Maximum Result Rows (10 – 1,000)
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="space-y-1">
+              <label
+                htmlFor="setting-max-rows"
+                className="block text-[11px] font-medium text-slate-700 dark:text-slate-300"
+              >
+                Max Result Rows (10 – 1,000)
               </label>
               <input
                 id="setting-max-rows"
@@ -76,13 +80,16 @@ export function SettingsPage() {
                 max={1000}
                 value={maxRows}
                 onChange={(e) => setMaxRows(Number(e.target.value))}
-                className="w-full h-9 px-3 text-sm font-mono tabular-nums rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full h-8.5 px-3 text-xs font-mono tabular-nums rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="setting-timeout" className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Statement Timeout in ms (1,000 – 30,000)
+            <div className="space-y-1">
+              <label
+                htmlFor="setting-timeout"
+                className="block text-[11px] font-medium text-slate-700 dark:text-slate-300"
+              >
+                Statement Timeout ms (1,000 – 30,000)
               </label>
               <input
                 id="setting-timeout"
@@ -92,44 +99,44 @@ export function SettingsPage() {
                 step={500}
                 value={queryTimeoutMs}
                 onChange={(e) => setQueryTimeoutMs(Number(e.target.value))}
-                className="w-full h-9 px-3 text-sm font-mono tabular-nums rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full h-8.5 px-3 text-xs font-mono tabular-nums rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
           </div>
 
           {error && (
-            <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+            <p role="alert" className="text-xs text-rose-600 dark:text-rose-400">
               {error}
             </p>
           )}
 
-          <div className="flex items-center gap-3">
-            <Button type="submit" variant="primary" size="sm" disabled={saving}>
+          <div className="flex items-center gap-3 pt-1">
+            <Button type="submit" variant="primary" size="xs" disabled={saving}>
               {saving ? 'Saving...' : 'Save Guardrails'}
             </Button>
             {savedOk && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <Check className="w-3.5 h-3.5" />
-                Saved to PostgreSQL
+                <span>Saved to database</span>
               </span>
             )}
           </div>
         </form>
       </Surface>
 
-      {/* Appearance */}
-      <Surface className="p-6 flex flex-wrap items-center justify-between gap-4">
+      {/* Interface Theme Appearance */}
+      <Surface className="p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
             Interface Theme
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Switch between crisp daylight and low-glare dark mode.
+            Switch between daylight and low-glare dark mode
           </p>
         </div>
 
         <div
-          className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80"
+          className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.08]"
           role="tablist"
           aria-label="Color theme preference"
         >
@@ -138,73 +145,73 @@ export function SettingsPage() {
             role="tab"
             aria-selected={theme === 'light'}
             onClick={() => setTheme('light')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               theme === 'light'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white text-slate-950 shadow-2xs font-semibold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Sun className="w-3.5 h-3.5" />
-            Light
+            <span>Light</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={theme === 'dark'}
             onClick={() => setTheme('dark')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               theme === 'dark'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-[#1C212E] text-white shadow-2xs font-semibold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Moon className="w-3.5 h-3.5" />
-            Dark
+            <span>Dark</span>
           </button>
         </div>
       </Surface>
 
-      {/* Runtime Architecture Summary (Read-Only, no API key inputs) */}
-      <Surface className="p-6 space-y-3">
+      {/* Architecture & AI Config (Read-Only) */}
+      <Surface className="p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            AI & Security Configuration
+          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+            AI & Engine Topology
           </h2>
         </div>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-sm">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 font-mono">
           <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">LLM Provider</dt>
-            <dd className="font-medium text-slate-900 dark:text-slate-100 mt-0.5 capitalize">
+            <dt className="text-slate-400 font-sans">LLM Engine</dt>
+            <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
               {status?.llmProvider || 'Gemini'} ({status?.llmModel || 'gemini-4-hydrogen'})
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">Database Mode</dt>
-            <dd className="font-medium text-slate-900 dark:text-slate-100 mt-0.5">
-              PostgreSQL Read-Only Analytics Sandbox
+            <dt className="text-slate-400 font-sans">Database Engine</dt>
+            <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+              PostgreSQL 16 Embedded Analytics
             </dd>
           </div>
         </dl>
       </Surface>
 
-      {/* Account */}
-      <Surface className="p-6 flex flex-wrap items-center justify-between gap-4">
+      {/* Authenticated Account */}
+      <Surface className="p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Signed-In Analyst Account
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+            Authenticated Analyst Session
           </h2>
-          <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">
-            {user?.name} · <span className="font-mono text-xs">{user?.email}</span>
+          <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5">
+            {user?.name} · <span className="font-mono">{user?.email}</span>
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Role: {user?.role} · Protected by signed JWT session
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Role: {user?.role} · Secured via signed JWT session
           </p>
         </div>
 
-        <Button variant="secondary" size="sm" onClick={logout}>
-          <LogOut className="w-3.5 h-3.5" />
-          Sign Out
+        <Button variant="secondary" size="xs" onClick={logout}>
+          <LogOut className="w-3 h-3" />
+          <span>Sign Out</span>
         </Button>
       </Surface>
     </div>

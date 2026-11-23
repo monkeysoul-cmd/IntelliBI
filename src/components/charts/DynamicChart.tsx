@@ -143,9 +143,9 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
             {config.title || 'Analytics Visualization'}
           </h3>
-          {config.description && (
+          {config.subtitle && (
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {config.description}
+              {config.subtitle}
             </p>
           )}
         </div>
@@ -193,7 +193,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
               </span>
               <button
                 type="button"
-                onClick={() => downloadCsvFile(columns, rows, 'query-export.csv')}
+                onClick={() => downloadCsvFile('analytics-data.csv', columns, rows)}
                 className="inline-flex items-center gap-1 h-7.5 px-2.5 text-xs font-medium rounded-md border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
               >
                 <Download className="w-3 h-3" />
@@ -230,7 +230,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                           typeof row[col] === 'number' && 'font-mono tabular-nums'
                         )}
                       >
-                        {formatCellValue(row[col])}
+                        {formatCellValue(col, row[col])}
                       </td>
                     ))}
                   </tr>
