@@ -113,7 +113,7 @@ export function ReportsPage() {
               >
                 <p className="text-xs font-semibold leading-snug line-clamp-2">{rep.title}</p>
                 <p className="text-[10px] text-slate-400 font-mono">
-                  {formatDateTime(rep.createdAt)} · {rep.rows.length} rows
+                  {formatDateTime(rep.createdAt)} · {rep.rows?.length ?? 0} rows
                 </p>
               </button>
             ))}
@@ -128,7 +128,7 @@ export function ReportsPage() {
                     {activeReport.title}
                   </h2>
                   <p className="text-xs text-slate-400 font-mono">
-                    Saved {formatDateTime(activeReport.createdAt)} · {activeReport.rows.length} records
+                    Saved {formatDateTime(activeReport.createdAt)} · {activeReport.rows?.length ?? 0} records
                   </p>
                 </div>
 
@@ -191,7 +191,7 @@ export function ReportsPage() {
                   {activeReport.summary}
                 </p>
 
-                {activeReport.insights.length > 0 && (
+                {activeReport.insights && activeReport.insights.length > 0 && (
                   <div className="space-y-1.5 pt-1">
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
                       Key Findings
@@ -206,7 +206,7 @@ export function ReportsPage() {
               </div>
 
               {/* Render Chart */}
-              {activeReport.visualization && activeReport.rows.length > 0 && (
+              {activeReport.visualization && activeReport.rows && activeReport.rows.length > 0 && (
                 <div className="pt-2">
                   <DynamicChart
                     config={activeReport.visualization}

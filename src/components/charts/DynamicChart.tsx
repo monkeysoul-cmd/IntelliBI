@@ -17,6 +17,7 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  Activity,
   AreaChart as AreaIcon,
   BarChart3,
   Download,
@@ -72,21 +73,24 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
     return list;
   }, [config]);
 
+  const safeYKeys = useMemo(() => config.yKeys || [], [config.yKeys]);
+
   const effectiveFormat = useMemo<'currency' | 'number' | 'percent'>(() => {
     if (config.valueFormat) return config.valueFormat;
-    if (config.yKeys.some((k) => /(revenue|amount|sales|price|cost|profit|aov|spend)/i.test(k))) {
+    if (safeYKeys.some((k) => /(revenue|amount|sales|price|cost|profit|aov|spend)/i.test(k))) {
       return 'currency';
     }
-    if (config.yKeys.some((k) => /(pct|percent|rate|margin)/i.test(k))) {
+    if (safeYKeys.some((k) => /(pct|percent|rate|margin)/i.test(k))) {
       return 'percent';
     }
     return 'number';
-  }, [config.valueFormat, config.yKeys]);
+  }, [config.valueFormat, safeYKeys]);
 
   const chartData = useMemo(() => {
-    return rows.slice(0, 40).map((row) => {
+    const safeRows = rows || [];
+    return safeRows.slice(0, 40).map((row) => {
       const normalized: Record<string, unknown> = { ...row };
-      for (const yk of config.yKeys) {
+      for (const yk of safeYKeys) {
         const val = row[yk];
         normalized[yk] = typeof val === 'number' ? val : Number(val ?? 0);
       }
@@ -94,7 +98,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
       normalized.__shortLabel = rawLabel.length > 20 ? `${rawLabel.slice(0, 18)}…` : rawLabel;
       return normalized;
     });
-  }, [rows, config.xKey, config.yKeys]);
+  }, [rows, config.xKey, safeYKeys]);
 
   const filteredTableRows = useMemo(() => {
     const q = tableFilter.trim().toLowerCase();
@@ -120,6 +124,8 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
 
   const renderViewIcon = (type: ChartType) => {
     switch (type) {
+      case 'kpi':
+        return <Activity className="w-3.5 h-3.5" />;
       case 'area':
         return <AreaIcon className="w-3.5 h-3.5" />;
       case 'bar':
@@ -174,7 +180,14 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
       </div>
 
       {/* Render Chart Body */}
-      {activeView === 'table' ? (
+      {rows.length === 0 ? (
+        <div
+          style={{ height }}
+          className="w-full flex flex-col items-center justify-center p-6 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-white/[0.08] rounded-xl"
+        >
+          No records returned by analytical query.
+        </div>
+      ) : activeView === 'table' ? (
         <div className="space-y-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="relative flex-1 max-w-xs">
@@ -238,6 +251,27 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
               </tbody>
             </table>
           </div>
+        </div>
+      ) : activeView === 'kpi' ? (
+        <div
+          style={{ height }}
+          className="w-full flex flex-col items-center justify-center p-6 rounded-xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05]"
+        >
+          <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider mb-2">
+            {safeYKeys[0] ? formatColumnHeader(safeYKeys[0]) : config.title}
+          </span>
+          <div className="text-3xl sm:text-4xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+            {chartData[0] && safeYKeys[0]
+              ? formatCellValue(safeYKeys[0], chartData[0][safeYKeys[0]])
+              : chartData[0] && Object.values(chartData[0])[0] !== undefined
+                ? String(Object.values(chartData[0])[0])
+                : '—'}
+          </div>
+          {config.subtitle && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center max-w-sm font-sans">
+              {config.subtitle}
+            </p>
+          )}
         </div>
       ) : (
         <div style={{ height }} className="w-full relative">

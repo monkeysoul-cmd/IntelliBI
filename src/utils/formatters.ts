@@ -45,7 +45,8 @@ export function formatColumnHeader(col: string): string {
 export function formatCellValue(col: string, val: unknown): string {
   if (val === null || val === undefined) return '—';
   if (typeof val === 'number') {
-    const lower = col.toLowerCase();
+    if (!Number.isFinite(val)) return '—';
+    const lower = String(col ?? '').toLowerCase();
     if (/(revenue|amount|sales|price|cost|profit|aov|spend|value|gross)/i.test(lower)) {
       return formatCurrency(val);
     }
@@ -176,7 +177,8 @@ export function exportReportToPdf(params: {
   }
 
   // Key Insights
-  if (params.insights.length > 0) {
+  const safeInsights = params.insights || [];
+  if (safeInsights.length > 0) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(15, 23, 42);
@@ -185,7 +187,7 @@ export function exportReportToPdf(params: {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(51, 65, 85);
-    for (const insight of params.insights.slice(0, 6)) {
+    for (const insight of safeInsights.slice(0, 6)) {
       const lines = doc.splitTextToSize(`• ${insight}`, 498);
       doc.text(lines, marginX + 6, cursorY);
       cursorY += lines.length * 13 + 4;
@@ -209,12 +211,14 @@ export function exportReportToPdf(params: {
   }
 
   // Result Data Table
-  if (params.columns.length > 0 && params.rows.length > 0) {
+  const safeColumns = params.columns || [];
+  const safeRows = params.rows || [];
+  if (safeColumns.length > 0 && safeRows.length > 0) {
     autoTable(doc, {
       startY: cursorY,
-      head: [params.columns.map(formatColumnHeader)],
-      body: params.rows.slice(0, 40).map((row) =>
-        params.columns.map((c) => formatCellValue(c, row[c]))
+      head: [safeColumns.map(formatColumnHeader)],
+      body: safeRows.slice(0, 40).map((row) =>
+        safeColumns.map((c) => formatCellValue(c, row[c]))
       ),
       margin: { left: marginX, right: marginX },
       styles: { fontSize: 8.5, cellPadding: 5, textColor: [30, 41, 59] },

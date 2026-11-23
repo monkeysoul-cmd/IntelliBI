@@ -50,6 +50,16 @@ apiClient.interceptors.request.use((req) => {
   return req;
 });
 
+apiClient.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      setAuthToken(null);
+    }
+    return Promise.reject(err);
+  }
+);
+
 export interface AuthResponse {
   token: string;
   user: UserProfile;
@@ -168,6 +178,9 @@ export const analyticsApi = {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        setAuthToken(null);
+      }
       let msg = `Request failed (${res.status})`;
       try {
         const errJson = await res.json();
@@ -200,10 +213,11 @@ export const analyticsApi = {
       for (const chunk of chunks) {
         const line = chunk
           .split('\n')
-          .find((l) => l.startsWith('data: '));
+          .find((l) => l.trimStart().startsWith('data: '));
         if (!line) continue;
         try {
-          const event = JSON.parse(line.slice(6));
+          const raw = line.slice(line.indexOf('data: ') + 6).trim();
+          const event = JSON.parse(raw);
           if (event.type === 'node_start' || event.type === 'node_complete') {
             handlers.onNodeEvent?.({
               node: event.node,
