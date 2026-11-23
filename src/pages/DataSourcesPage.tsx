@@ -31,11 +31,14 @@ export function DataSourcesPage() {
       .then(([statusRes, schemaRes]) => {
         if (!active) return;
         setStatus(statusRes);
-        setTables(schemaRes.tables);
-        setRelationships(schemaRes.relationships);
-        if (schemaRes.tables.length > 0 && !schemaRes.tables.some((t) => t.name === selectedTable)) {
+        setTables(schemaRes.tables ?? []);
+        setRelationships(schemaRes.relationships ?? []);
+        if (schemaRes.tables?.length > 0 && !schemaRes.tables.some((t) => t.name === selectedTable)) {
           setSelectedTable(schemaRes.tables[0].name);
         }
+      })
+      .catch((err) => {
+        console.error('Failed to load database schema', err);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -243,7 +246,7 @@ export function DataSourcesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100/70 dark:divide-white/[0.04] text-xs">
-                    {activeSchema.columns.map((col) => (
+                    {(activeSchema.columns ?? []).map((col) => (
                       <tr key={col.name} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
                         <td className="py-2 pr-4 font-mono font-medium text-slate-900 dark:text-slate-100">
                           {col.name}
@@ -297,12 +300,12 @@ export function DataSourcesPage() {
 
             {loadingPreview ? (
               <Skeleton className="h-40 w-full" />
-            ) : preview && preview.rows.length > 0 ? (
+            ) : preview && preview.rows && preview.rows.length > 0 ? (
               <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-white/[0.07]">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 dark:bg-white/[0.03] text-slate-700 dark:text-slate-300 border-b border-slate-200/80 dark:border-white/[0.07]">
                     <tr>
-                      {preview.columns.map((c) => (
+                      {(preview.columns ?? []).map((c) => (
                         <th key={c} className="py-2 px-3 whitespace-nowrap font-mono font-medium text-[11px]">
                           {formatColumnHeader(c)}
                         </th>
@@ -310,9 +313,9 @@ export function DataSourcesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
-                    {preview.rows.map((row, idx) => (
+                    {(preview.rows ?? []).map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
-                        {preview.columns.map((c) => (
+                        {(preview.columns ?? []).map((c) => (
                           <td
                             key={c}
                             className={cn(

@@ -109,7 +109,7 @@ export function AgentPipelineTrace({
                     )}
                   </div>
                 </div>
-                {step.durationMs > 0 && (
+                {typeof step.durationMs === 'number' && step.durationMs > 0 && (
                   <span className="font-mono tabular-nums text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
                     {step.durationMs}ms
                   </span>
