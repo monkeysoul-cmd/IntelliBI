@@ -3,33 +3,37 @@ import { useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   BookmarkPlus,
+  Bot,
   Check,
   Download,
   FileDown,
+  Layers,
+  Lightbulb,
   Loader2,
   Plus,
   RefreshCw,
   Send,
   ShieldAlert,
+  Sparkles,
+  Target,
   ThumbsDown,
   ThumbsUp,
 } from 'lucide-react';
 import { analyticsApi, reportsApi } from '../services/api';
 import type { AnalyticsQueryResponse, PipelineTraceStep } from '../types/api';
-import { Button, Surface } from '../components/ui/Primitives';
+import { Badge, Button, Keycap, Surface } from '../components/ui/Primitives';
 import { DynamicChart } from '../components/charts/DynamicChart';
 import { AgentPipelineTrace } from '../components/analyst/AgentPipelineTrace';
 import { SqlViewer } from '../components/analyst/SqlViewer';
 import { downloadCsvFile, exportReportToPdf } from '../utils/formatters';
 
 const SUGGESTED_QUESTIONS = [
-  'What was our total revenue this month?',
-  'Which products generated the highest revenue?',
-  'Compare sales between the last two quarters.',
-  'Which region has the highest customer acquisition?',
-  'Show monthly revenue trends for the previous year.',
-  'Identify customers whose purchases have declined.',
-  'What are the top five performing products?',
+  { label: 'Revenue Trends', q: 'What was our total revenue this month compared to last month?' },
+  { label: 'Product Margin', q: 'Which products generated the highest revenue and margins?' },
+  { label: 'Regional Share', q: 'Which region has the highest customer acquisition and order volume?' },
+  { label: 'Quarterly Sales', q: 'Compare quarterly sales trends between 2025 and 2026.' },
+  { label: 'Churn Risk', q: 'Identify customers whose purchases have declined or ceased.' },
+  { label: 'Average Ticket', q: 'What is the average order value by region and category?' },
 ];
 
 export function AnalystPage() {
@@ -196,49 +200,71 @@ export function AnalystPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8.5rem)] space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            AI Data Analyst
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Ask business questions in plain English. IntelliBI plans, validates read-only PostgreSQL SQL, analyzes rows, and renders charts automatically.
-          </p>
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-5">
+      {/* Page Title & Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
+                AI Business Analyst
+              </h1>
+              <Badge variant="blue">Autonomous Graph</Badge>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Natural language questions compiled to AST-verified read-only PostgreSQL SQL
+            </p>
+          </div>
         </div>
 
         {messages.length > 0 && (
           <Button variant="secondary" size="sm" onClick={handleNewSession}>
             <Plus className="w-3.5 h-3.5" />
-            New Analysis
+            <span>New Analysis</span>
           </Button>
         )}
       </div>
 
-      {/* Empty Welcome + Suggested Prompts */}
+      {/* Empty State Welcome & Prompt Deck */}
       {messages.length === 0 && !isStreaming && (
         <Surface className="p-6 sm:p-8 space-y-6">
           <div className="max-w-2xl space-y-2">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              What would you like to uncover in your business data?
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200/60 dark:border-blue-500/20">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Multi-Agent LangGraph Architecture</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-display">
+              Ask any business inquiry in natural language
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Every question passes through our 9-node autonomous workflow: Query Analysis, PostgreSQL Schema Intelligence, SQL Generation, AST Security Validation, Read-Only Execution, Self-Correction (up to 2 retries), Statistical Analysis, Visualization Selection, and Executive Synthesis.
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-sans">
+              IntelliBI autonomously orchestrates 7 specialized agents: Query Analyzer → Schema Intelligence → SQL Generator → AST Security Validator → PostgreSQL Executor → Statistical Analysis → Visualization Selection.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {SUGGESTED_QUESTIONS.map((q) => (
-              <button
-                key={q}
-                type="button"
-                onClick={() => runQuestion(q, messages)}
-                className="p-3.5 text-left rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 hover:border-blue-400 dark:hover:border-blue-500/60 hover:bg-white dark:hover:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
-              >
-                {q}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider">
+              Suggested Business Inquiries
+            </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {SUGGESTED_QUESTIONS.map((item) => (
+                <button
+                  key={item.q}
+                  type="button"
+                  onClick={() => runQuestion(item.q, messages)}
+                  className="p-3 text-left rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.02] hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:bg-white dark:hover:bg-white/[0.05] transition-all cursor-pointer group"
+                >
+                  <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold block mb-1">
+                    {item.label}
+                  </span>
+                  <span className="text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-snug">
+                    {item.q}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </Surface>
       )}
@@ -246,13 +272,16 @@ export function AnalystPage() {
       {/* Analysis Thread */}
       <div className="flex-1 space-y-6">
         {messages.map((item, idx) => (
-          <div key={`${item.queryId}-${idx}`} className="space-y-4">
+          <div key={`${item.queryId}-${idx}`} className="space-y-3.5">
             {/* User Question Header */}
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                {item.question}
-              </h2>
-              <span className="text-xs font-mono tabular-nums text-slate-400 dark:text-slate-500 whitespace-nowrap shrink-0">
+            <div className="flex items-center justify-between gap-4 px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white font-display">
+                  {item.question}
+                </h2>
+              </div>
+              <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 whitespace-nowrap shrink-0">
                 Query #{item.queryId}
               </span>
             </div>
@@ -260,13 +289,13 @@ export function AnalystPage() {
             <Surface className="p-5 sm:p-6 space-y-5">
               {/* Security Blocked Banner */}
               {item.executionStatus === 'blocked' && (
-                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex items-start gap-3">
-                  <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 text-sm">
-                    <p className="font-semibold text-amber-900 dark:text-amber-200">
-                      Blocked by Read-Only SQL Security Guard
+                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex items-start gap-3">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 text-xs">
+                    <p className="font-semibold text-amber-900 dark:text-amber-200 font-display">
+                      Blocked by Read-Only AST Security Guard
                     </p>
-                    <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                    <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed font-sans">
                       {item.answer}
                     </p>
                   </div>
@@ -275,13 +304,13 @@ export function AnalystPage() {
 
               {/* Failure Banner */}
               {item.executionStatus === 'failed' && (
-                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 text-sm">
-                    <p className="font-semibold text-red-900 dark:text-red-200">
-                      Query Execution Unsuccessful
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 text-xs">
+                    <p className="font-semibold text-rose-900 dark:text-rose-200 font-display">
+                      Execution Unsuccessful
                     </p>
-                    <p className="text-red-800 dark:text-red-300/90 leading-relaxed">
+                    <p className="text-rose-800 dark:text-rose-300/90 leading-relaxed font-sans">
                       {item.answer}
                     </p>
                   </div>
@@ -291,19 +320,20 @@ export function AnalystPage() {
               {/* Standard Executive Answer */}
               {(item.executionStatus === 'succeeded' || item.executionStatus === 'clarification') && (
                 <div className="space-y-4">
-                  <p className="text-sm sm:text-[15px] text-slate-800 dark:text-slate-200 leading-relaxed">
+                  <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
                     {item.answer}
                   </p>
 
                   {item.insights.length > 0 && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
-                      <div className="space-y-2">
-                        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          Key Findings
-                        </h3>
-                        <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc pl-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 font-display">
+                          <Lightbulb className="w-3.5 h-3.5" />
+                          <span>Key Findings</span>
+                        </div>
+                        <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
                           {item.insights.map((ins, i) => (
-                            <li key={i} className="leading-snug">
+                            <li key={i} className="leading-relaxed">
                               {ins}
                             </li>
                           ))}
@@ -311,13 +341,14 @@ export function AnalystPage() {
                       </div>
 
                       {item.recommendations.length > 0 && (
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            Recommendations
-                          </h3>
-                          <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc pl-4">
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-display">
+                            <Target className="w-3.5 h-3.5" />
+                            <span>Recommendations</span>
+                          </div>
+                          <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
                             {item.recommendations.map((rec, i) => (
-                              <li key={i} className="leading-snug">
+                              <li key={i} className="leading-relaxed">
                                 {rec}
                               </li>
                             ))}
@@ -329,9 +360,9 @@ export function AnalystPage() {
                 </div>
               )}
 
-              {/* Interactive Auto-Selected Visualization */}
+              {/* Interactive Visualization */}
               {item.executionStatus === 'succeeded' && item.visualization && item.rows.length > 0 && (
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                <div className="pt-2">
                   <DynamicChart
                     config={item.visualization}
                     columns={item.columns}
@@ -342,66 +373,64 @@ export function AnalystPage() {
 
               {/* SQL Viewer */}
               {item.generatedSql && (
-                <div className="pt-2">
-                  <SqlViewer
-                    sql={item.generatedSql}
-                    explanation={item.sqlExplanation}
-                    validation={item.validation}
-                    executionTimeMs={item.executionTimeMs}
-                    rowCount={item.rowCount}
-                    retryCount={item.retryCount}
-                  />
-                </div>
+                <SqlViewer
+                  sql={item.generatedSql}
+                  explanation={item.sqlExplanation}
+                  validation={item.validation}
+                  executionTimeMs={item.executionTimeMs}
+                  rowCount={item.rowCount}
+                  retryCount={item.retryCount}
+                />
               )}
 
-              {/* Multi-Agent Trace */}
+              {/* Multi-Agent Pipeline Trace */}
               {item.pipelineTrace.length > 0 && (
                 <AgentPipelineTrace steps={item.pipelineTrace} />
               )}
 
-              {/* Action Toolbar */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+              {/* Actions Footer */}
+              <div className="pt-2.5 border-t border-slate-100 dark:border-white/[0.05] flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   {item.executionStatus === 'succeeded' && (
                     <>
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="secondary"
                         onClick={() => handleSaveReport(item)}
                         disabled={savingReportId === item.queryId || savedReportIds[item.queryId]}
                       >
                         {savedReportIds[item.queryId] ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            Saved to Reports
+                            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>Saved to Reports</span>
                           </>
                         ) : (
                           <>
-                            <BookmarkPlus className="w-3.5 h-3.5" />
-                            {savingReportId === item.queryId ? 'Saving...' : 'Save Report'}
+                            <BookmarkPlus className="w-3 h-3" />
+                            <span>{savingReportId === item.queryId ? 'Saving...' : 'Save Report'}</span>
                           </>
                         )}
                       </Button>
 
                       {item.rows.length > 0 && (
                         <Button
-                          size="sm"
+                          size="xs"
                           variant="secondary"
                           onClick={() =>
                             downloadCsvFile(
-                              `intellibi-query-${item.queryId}`,
+                              `intellibi-query-${item.queryId}.csv`,
                               item.columns,
                               item.rows
                             )
                           }
                         >
-                          <Download className="w-3.5 h-3.5" />
-                          Export CSV
+                          <Download className="w-3 h-3" />
+                          <span>CSV</span>
                         </Button>
                       )}
 
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="secondary"
                         onClick={() =>
                           exportReportToPdf({
@@ -416,20 +445,20 @@ export function AnalystPage() {
                           })
                         }
                       >
-                        <FileDown className="w-3.5 h-3.5" />
-                        PDF Report
+                        <FileDown className="w-3 h-3" />
+                        <span>PDF Report</span>
                       </Button>
                     </>
                   )}
 
                   <Button
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                     onClick={() => runQuestion(item.question, messages.slice(0, idx))}
                     disabled={isStreaming}
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Regenerate
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Regenerate</span>
                   </Button>
                 </div>
 
@@ -440,8 +469,8 @@ export function AnalystPage() {
                     aria-label={`Mark query ${item.queryId} helpful`}
                     className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                       feedbackMap[item.queryId] === 'helpful'
-                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'
+                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                     }`}
                   >
                     <ThumbsUp className="w-3.5 h-3.5" />
@@ -452,8 +481,8 @@ export function AnalystPage() {
                     aria-label={`Mark query ${item.queryId} needs improvement`}
                     className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                       feedbackMap[item.queryId] === 'needs_improvement'
-                        ? 'text-red-600 bg-red-50 dark:bg-red-950/50 dark:text-red-400'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'
+                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                     }`}
                   >
                     <ThumbsDown className="w-3.5 h-3.5" />
@@ -464,16 +493,19 @@ export function AnalystPage() {
           </div>
         ))}
 
-        {/* Live Streaming Progress Card */}
+        {/* Live Streaming State */}
         {isStreaming && activeQuestion && (
           <div className="space-y-3">
-            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-              {activeQuestion}
-            </h2>
+            <div className="flex items-center gap-2 px-1">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white font-display">
+                {activeQuestion}
+              </h2>
+            </div>
             <Surface className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300">
                 <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                <span>Executing multi-agent analytics workflow against PostgreSQL...</span>
+                <span>Executing multi-agent analytics pipeline against PostgreSQL...</span>
               </div>
               <AgentPipelineTrace steps={liveSteps} isRunning defaultExpanded />
             </Surface>
@@ -483,7 +515,7 @@ export function AnalystPage() {
         {error && (
           <div
             role="alert"
-            className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-sm text-red-700 dark:text-red-300 flex items-start gap-3"
+            className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2.5"
           >
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
@@ -493,9 +525,9 @@ export function AnalystPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Sticky Query Composer */}
+      {/* Sticky Query Input Console */}
       <div className="sticky bottom-4 z-20">
-        <Surface className="p-2.5 shadow-sm">
+        <Surface className="p-2 sm:p-2.5 shadow-lg border border-slate-200/90 dark:border-white/[0.1] backdrop-blur-lg bg-white/95 dark:bg-[#11141D]/95">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <label htmlFor="analyst-question-input" className="sr-only">
               Ask a natural language question about your PostgreSQL data
@@ -509,25 +541,28 @@ export function AnalystPage() {
               placeholder={
                 messages.length > 0
                   ? 'Ask a follow-up question (context is preserved)...'
-                  : 'Ask a question about revenue, products, customers, regions, or payments...'
+                  : 'Ask a question about revenue, orders, customers, or products...'
               }
-              className="flex-1 h-10 px-3 text-sm bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none"
+              className="flex-1 h-9 px-3 text-xs bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
             />
+            <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400 px-1">
+              <Keycap>Enter</Keycap>
+            </div>
             <Button
               type="submit"
               variant="primary"
-              size="md"
+              size="sm"
               disabled={isStreaming || !input.trim()}
             >
               {isStreaming ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Thinking</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  Run Analysis
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Run Query</span>
                 </>
               )}
             </Button>
