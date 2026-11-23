@@ -40,10 +40,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [quickAsk, setQuickAsk] = useState('');
   const [dbStatus, setDbStatus] = useState<DatabaseStatusInfo | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+      if (e.key === 'Escape') {
+        if (mobileOpen) setMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen]);
 
   useEffect(() => {
     let active = true;
@@ -218,6 +234,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <form onSubmit={handleQuickSearchSubmit} className="relative flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={quickAsk}
                 onChange={(e) => setQuickAsk(e.target.value)}

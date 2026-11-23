@@ -118,7 +118,10 @@ export function AnalystPage() {
     const qParam = searchParams.get('q');
     const historyIdParam = searchParams.get('historyId');
     const paramKey = `${qParam ?? ''}|${historyIdParam ?? ''}`;
-    if (!qParam && !historyIdParam) return;
+    if (!qParam && !historyIdParam) {
+      initializedParamRef.current = null;
+      return;
+    }
     if (initializedParamRef.current === paramKey) return;
     initializedParamRef.current = paramKey;
 
@@ -324,7 +327,7 @@ export function AnalystPage() {
                     {item.answer}
                   </p>
 
-                  {item.insights.length > 0 && (
+                  {item.insights && item.insights.length > 0 && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
                       <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 font-display">
@@ -340,7 +343,7 @@ export function AnalystPage() {
                         </ul>
                       </div>
 
-                      {item.recommendations.length > 0 && (
+                      {item.recommendations && item.recommendations.length > 0 && (
                         <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
                           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-display">
                             <Target className="w-3.5 h-3.5" />
@@ -361,7 +364,7 @@ export function AnalystPage() {
               )}
 
               {/* Interactive Visualization */}
-              {item.executionStatus === 'succeeded' && item.visualization && item.rows.length > 0 && (
+              {item.executionStatus === 'succeeded' && item.visualization && item.rows && item.rows.length > 0 && (
                 <div className="pt-2">
                   <DynamicChart
                     config={item.visualization}
@@ -384,7 +387,7 @@ export function AnalystPage() {
               )}
 
               {/* Multi-Agent Pipeline Trace */}
-              {item.pipelineTrace.length > 0 && (
+              {item.pipelineTrace && item.pipelineTrace.length > 0 && (
                 <AgentPipelineTrace steps={item.pipelineTrace} />
               )}
 
@@ -412,7 +415,7 @@ export function AnalystPage() {
                         )}
                       </Button>
 
-                      {item.rows.length > 0 && (
+                      {item.rows && item.rows.length > 0 && (
                         <Button
                           size="xs"
                           variant="secondary"

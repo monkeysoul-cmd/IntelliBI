@@ -123,7 +123,8 @@ export function OverviewPage() {
       ]
     : [];
 
-  const totalRegionalRev = regions.reduce((sum, r) => sum + r.revenue, 0) || 1;
+  const totalRegionalRev =
+    regions.reduce((sum, r) => sum + (Number(r.revenue) || 0), 0) || 1;
 
   return (
     <div className="space-y-6">
@@ -432,7 +433,7 @@ export function OverviewPage() {
                         {formatNumber(p.units_sold)}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
-                        {p.margin_pct.toFixed(1)}%
+                        {Number.isFinite(p.margin_pct) ? p.margin_pct.toFixed(1) : '0.0'}%
                       </td>
                       <td className="py-2.5 pl-3 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(p.revenue)}
@@ -464,7 +465,8 @@ export function OverviewPage() {
           ) : (
             <div className="space-y-3">
               {regions.map((r) => {
-                const share = (r.revenue / totalRegionalRev) * 100;
+                const rev = Number(r.revenue) || 0;
+                const share = totalRegionalRev > 0 ? (rev / totalRegionalRev) * 100 : 0;
                 return (
                   <div key={r.region} className="space-y-1">
                     <div className="flex items-baseline justify-between gap-2 text-xs">

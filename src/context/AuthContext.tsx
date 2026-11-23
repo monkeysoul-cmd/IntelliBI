@@ -53,13 +53,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       setAuthToken(null);
-      try {
-        const demo = await authApi.demoSession();
-        setAuthToken(demo.token);
-        setUser(demo.user);
-        setSettings(demo.settings);
-        setIsSignedOut(false);
-      } catch {
+      const explicitSignOut =
+        typeof window !== 'undefined' &&
+        window.sessionStorage.getItem('intellibi_signed_out') === '1';
+      if (!explicitSignOut) {
+        try {
+          const demo = await authApi.demoSession();
+          setAuthToken(demo.token);
+          setUser(demo.user);
+          setSettings(demo.settings);
+          setIsSignedOut(false);
+        } catch {
+          setUser(null);
+          setIsSignedOut(true);
+        }
+      } else {
         setUser(null);
         setIsSignedOut(true);
       }
