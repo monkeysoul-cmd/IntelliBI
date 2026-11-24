@@ -31,7 +31,11 @@ export function SettingsPage() {
     setSavedOk(false);
     setSaving(true);
     try {
-      await updateSettings({ maxRows: Number(maxRows), queryTimeoutMs: Number(queryTimeoutMs) });
+      const sanitizedRows = Math.min(Math.max(Number(maxRows) || 250, 10), 1000);
+      const sanitizedTimeout = Math.min(Math.max(Number(queryTimeoutMs) || 5000, 1000), 30000);
+      setMaxRows(sanitizedRows);
+      setQueryTimeoutMs(sanitizedTimeout);
+      await updateSettings({ maxRows: sanitizedRows, queryTimeoutMs: sanitizedTimeout });
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 2500);
     } catch {

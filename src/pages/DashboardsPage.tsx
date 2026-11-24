@@ -57,11 +57,14 @@ export function DashboardsPage() {
     ])
       .then(([revRes, prodRes, regRes]) => {
         if (!active) return;
-        setRevenueSeries(revRes.series);
-        setProducts(prodRes.products);
-        setCategoriesList(prodRes.categories);
-        setRegionsData(regRes.regions);
-        setCategoryBreakdown(regRes.categories);
+        setRevenueSeries(revRes.series ?? []);
+        setProducts(prodRes.products ?? []);
+        setCategoriesList(prodRes.categories ?? []);
+        setRegionsData(regRes.regions ?? []);
+        setCategoryBreakdown(regRes.categories ?? []);
+      })
+      .catch((err) => {
+        console.error('Failed to load dashboard metrics', err);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -72,6 +75,7 @@ export function DashboardsPage() {
   }, [year, region, category]);
 
   const handleExportProducts = () => {
+    if (!products || products.length === 0) return;
     const cols = [
       'product_name',
       'category',
@@ -165,6 +169,10 @@ export function DashboardsPage() {
 
           {loading ? (
             <Skeleton className="h-[270px] w-full" />
+          ) : revenueSeries.length === 0 ? (
+            <div className="h-[270px] w-full flex items-center justify-center text-xs text-slate-400">
+              No revenue series data available for the selected filters.
+            </div>
           ) : (
             <div className="h-[270px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -227,6 +235,10 @@ export function DashboardsPage() {
 
           {loading ? (
             <Skeleton className="h-[270px] w-full" />
+          ) : categoryBreakdown.length === 0 ? (
+            <div className="h-[270px] w-full flex items-center justify-center text-xs text-slate-400">
+              No category data available for the selected filters.
+            </div>
           ) : (
             <div className="h-[270px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -276,6 +288,10 @@ export function DashboardsPage() {
 
         {loading ? (
           <Skeleton className="h-[240px] w-full" />
+        ) : regionsData.length === 0 ? (
+          <div className="h-[240px] w-full flex items-center justify-center text-xs text-slate-400">
+            No regional comparison data available for the selected filters.
+          </div>
         ) : (
           <div className="h-[240px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -355,34 +371,42 @@ export function DashboardsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100/70 dark:divide-white/[0.04] text-xs">
-              {products.map((p) => (
-                <tr key={p.product_id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
-                  <td className="py-2.5 pr-4 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                    {p.product_name}
-                  </td>
-                  <td className="py-2.5 px-3 whitespace-nowrap">
-                    <Badge variant="neutral">{p.category}</Badge>
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                    {formatCurrency(p.unit_price)}
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                    {formatNumber(p.units_sold)}
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
-                    {formatCurrency(p.revenue)}
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                    {formatCurrency(p.gross_profit)}
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
-                    {p.margin_pct.toFixed(1)}%
-                  </td>
-                  <td className="py-2.5 pl-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                    {formatNumber(p.stock_quantity)}
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-xs text-slate-400">
+                    No products match the selected filters.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                products.map((p) => (
+                  <tr key={p.product_id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="py-2.5 pr-4 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                      {p.product_name}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <Badge variant="neutral">{p.category}</Badge>
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
+                      {formatCurrency(p.unit_price)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
+                      {formatNumber(p.units_sold)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
+                      {formatCurrency(p.revenue)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                      {formatCurrency(p.gross_profit)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
+                      {(Number(p.margin_pct) || 0).toFixed(1)}%
+                    </td>
+                    <td className="py-2.5 pl-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
+                      {formatNumber(p.stock_quantity)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

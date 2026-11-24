@@ -20,7 +20,11 @@ export function HistoryPage() {
       analyticsApi
         .getHistory({ search: search.trim() || undefined, status: statusFilter })
         .then((res) => {
-          if (active) setItems(res.items);
+          if (active) setItems(res.items ?? []);
+        })
+        .catch((err) => {
+          console.error('Failed to load query history', err);
+          if (active) setItems([]);
         })
         .finally(() => {
           if (active) setLoading(false);
