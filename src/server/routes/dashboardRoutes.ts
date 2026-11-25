@@ -191,7 +191,10 @@ router.get('/products', async (req, res) => {
     const year = typeof req.query.year === 'string' ? req.query.year : 'all';
     const region = typeof req.query.region === 'string' ? req.query.region : 'all';
     const category = typeof req.query.category === 'string' ? req.query.category : 'all';
-    const limit = Math.min(Math.max(Number(req.query.limit || 8), 3), 24);
+    const rawLimit = Number(req.query.limit);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(Math.floor(rawLimit), 3), 24)
+      : 8;
 
     const params: unknown[] = [];
     const conditions: string[] = ["o.order_status <> 'Cancelled'"];
@@ -256,6 +259,7 @@ router.get('/regions', async (req, res) => {
   try {
     const pg = await getDb();
     const year = typeof req.query.year === 'string' ? req.query.year : 'all';
+    const region = typeof req.query.region === 'string' ? req.query.region : 'all';
     const category = typeof req.query.category === 'string' ? req.query.category : 'all';
 
     const params: unknown[] = [];
@@ -277,8 +281,8 @@ router.get('/regions', async (req, res) => {
             c.region,
             COUNT(DISTINCT c.customer_id)::int AS customers,
             COUNT(DISTINCT o.order_id)::int AS orders,
-            ROUND(SUM(oi.quantity * oi.unit_price), 2)::float AS revenue,
-            ROUND(SUM(oi.quantity * oi.unit_price) / NULLIF(COUNT(DISTINCT o.order_id), 0), 2)::float AS avg_order_value
+            COALESCE(ROUND(SUM(oi.quantity * oi.unit_price), 2), 0)::float AS revenue,
+            COALESCE(ROUND(SUM(oi.quantity * oi.unit_price) / NULLIF(COUNT(DISTINCT o.order_id), 0), 2), 0)::float AS avg_order_value
           FROM customers c
           JOIN orders o ON c.customer_id = o.customer_id
           JOIN order_items oi ON o.order_id = oi.order_id
@@ -302,17 +306,30 @@ router.get('/regions', async (req, res) => {
 
     const result = await pg.query(sql, params);
 
+    const catParams: unknown[] = [];
+    const catConditions: string[] = ["o.order_status <> 'Cancelled'"];
+    if (year === '2025' || year === '2026') {
+      catParams.push(Number(year));
+      catConditions.push(`EXTRACT(YEAR FROM o.order_date) = $${catParams.length}`);
+    }
+    if (region && region !== 'all') {
+      catParams.push(region);
+      catConditions.push(`c.region = $${catParams.length}`);
+    }
+
     const catBreakdown = await pg.query(
       `SELECT
          p.category,
-         ROUND(SUM(oi.quantity * oi.unit_price), 2)::float AS revenue,
+         COALESCE(ROUND(SUM(oi.quantity * oi.unit_price), 2), 0)::float AS revenue,
          SUM(oi.quantity)::int AS units_sold
        FROM order_items oi
        JOIN products p ON oi.product_id = p.product_id
        JOIN orders o ON oi.order_id = o.order_id
-       WHERE o.order_status <> 'Cancelled'
+       JOIN customers c ON o.customer_id = c.customer_id
+       WHERE ${catConditions.join(' AND ')}
        GROUP BY p.category
-       ORDER BY revenue DESC`
+       ORDER BY revenue DESC`,
+      catParams
     );
 
     res.json({

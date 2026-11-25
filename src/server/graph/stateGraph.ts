@@ -153,6 +153,14 @@ export class StateGraph {
       current = router ? router(state) : END_NODE;
     }
 
+    if (current !== END_NODE && guardSteps >= maxSteps) {
+      state.executionStatus = 'failed';
+      state.lastError = state.lastError || 'Workflow exceeded maximum allowed execution steps.';
+      state.finalAnswer =
+        state.finalAnswer ||
+        'The analytics workflow exceeded its maximum step budget before completing. Please try a simpler query.';
+    }
+
     return state;
   }
 }

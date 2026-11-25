@@ -1,5 +1,5 @@
 import { ThinkingLevel, Type } from '@google/genai';
-import { getActiveModelName, getGeminiClient, withGeminiRetry } from '../core/gemini.ts';
+import { getActiveModelName, getGeminiClient, parseGeminiJson, withGeminiRetry } from '../core/gemini.ts';
 import type { DataAnalysisResult, VisualizationConfig } from './types.ts';
 
 export interface GeneratedBusinessResponse {
@@ -98,7 +98,7 @@ Strict Rules:
     })
   );
 
-  const parsed = JSON.parse((response.text ?? '{}').trim()) as Partial<GeneratedBusinessResponse>;
+  const parsed = parseGeminiJson<Partial<GeneratedBusinessResponse>>(response.text, {});
   return {
     answer:
       parsed.answer?.trim() ||

@@ -88,3 +88,43 @@ test('rejects unknown fabricated tables', () => {
   assert.equal(res.isValid, false);
   assert.equal(res.securityBlocked, true);
 });
+
+test('allows REPLACE string function and SQL keywords inside string literals', () => {
+  const res = validateAndSanitizeSql(
+    "SELECT REPLACE(category, '&', 'and') AS clean_category FROM products WHERE product_name <> 'Do Not Delete' LIMIT 20",
+    100
+  );
+  assert.equal(res.isValid, true);
+  assert.equal(res.securityBlocked, false);
+});
+
+test('blocks PostgreSQL backslash quote bypass and pg_settings access', () => {
+  const stacked = validateAndSanitizeSql("SELECT '\\'; SELECT * FROM orders;'", 100);
+  assert.equal(stacked.isValid, false);
+  assert.equal(stacked.securityBlocked, true);
+
+  const pgSettings = validateAndSanitizeSql('SELECT * FROM pg_settings LIMIT 5', 100);
+  assert.equal(pgSettings.isValid, false);
+  assert.equal(pgSettings.securityBlocked, true);
+});
+
+test('handles LIMIT ALL and FETCH FIRST clauses cleanly', () => {
+  const limitAll = validateAndSanitizeSql('SELECT product_name FROM products LIMIT ALL', 75);
+  assert.equal(limitAll.isValid, true);
+  assert.equal(limitAll.appliedRowLimit, 75);
+  assert.match(limitAll.sanitizedSql, /LIMIT 75$/);
+
+  const fetchFirst = validateAndSanitizeSql('SELECT product_name FROM products FETCH FIRST 500 ROWS ONLY', 50);
+  assert.equal(fetchFirst.isValid, true);
+  assert.equal(fetchFirst.appliedRowLimit, 50);
+  assert.match(fetchFirst.sanitizedSql, /FETCH FIRST 50 ROWS ONLY$/);
+});
+
+test('rejects unauthorized comma-joined or double-quoted tables in PostgreSQL extended queries', () => {
+  const res = validateAndSanitizeSql(
+    'SELECT o.total_amount::numeric FROM orders o, "secret_payroll" s LIMIT 10',
+    100
+  );
+  assert.equal(res.isValid, false);
+  assert.equal(res.securityBlocked, true);
+});

@@ -39,6 +39,16 @@ router.post('/generate', async (req: AuthRequest, res) => {
 
     const d = parsed.data;
     const pg = await getDb();
+
+    let verifiedHistoryId: number | null = null;
+    if (d.queryHistoryId) {
+      const histCheck = await pg.query<{ id: number }>(
+        'SELECT id FROM app_query_history WHERE id = $1 AND user_id = $2 LIMIT 1',
+        [d.queryHistoryId, req.user!.id]
+      );
+      verifiedHistoryId = histCheck.rows[0]?.id ?? null;
+    }
+
     const inserted = await pg.query<{ id: number; created_at: string }>(
       `INSERT INTO app_reports (
          user_id, query_history_id, title, description, question, generated_sql,
@@ -47,7 +57,7 @@ router.post('/generate', async (req: AuthRequest, res) => {
        RETURNING id, created_at::text`,
       [
         req.user!.id,
-        d.queryHistoryId ?? null,
+        verifiedHistoryId,
         d.title,
         d.description,
         d.question,

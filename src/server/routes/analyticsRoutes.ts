@@ -23,9 +23,9 @@ const queryRequestSchema = z.object({
   conversationHistory: z
     .array(
       z.object({
-        question: z.string(),
-        generatedSql: z.string().nullable().optional(),
-        summary: z.string().nullable().optional(),
+        question: z.string().max(2000),
+        generatedSql: z.string().max(8000).nullable().optional(),
+        summary: z.string().max(4000).nullable().optional(),
       })
     )
     .max(10)
@@ -88,10 +88,10 @@ async function persistQueryHistory(
       state.finalAnswer ?? null,
       state.executionResult
         ? JSON.stringify({
-            columns: state.executionResult.columns,
-            rows: state.executionResult.rows,
-            truncated: state.executionResult.truncated,
-          })
+          columns: state.executionResult.columns,
+          rows: state.executionResult.rows,
+          truncated: state.executionResult.truncated,
+        })
         : null,
       state.visualization ? JSON.stringify(state.visualization) : null,
       JSON.stringify({
@@ -173,12 +173,18 @@ router.post('/query/stream', aiRateLimiter, async (req: AuthRequest, res) => {
     return;
   }
 
+  let clientClosed = false;
+  req.on('close', () => {
+    clientClosed = true;
+  });
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
   const sendEvent = (event: GraphStreamEvent) => {
+    if (clientClosed || res.writableEnded || res.destroyed) return;
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
 
@@ -201,12 +207,12 @@ router.post('/query/stream', aiRateLimiter, async (req: AuthRequest, res) => {
     const queryId = await persistQueryHistory(req.user!.id, conversationId, state);
     const payload = formatWorkflowResponse(queryId, conversationId, state);
     sendEvent({ type: 'result', payload });
-    res.end();
+    if (!res.writableEnded) res.end();
   } catch (err: unknown) {
     console.error('Streaming analytics error:', err);
     const message = err instanceof Error ? err.message : 'Failed to execute AI analytics workflow.';
     sendEvent({ type: 'error', error: message });
-    res.end();
+    if (!res.writableEnded) res.end();
   }
 });
 
@@ -317,10 +323,10 @@ router.get('/history/:queryId', async (req: AuthRequest, res) => {
     const insightsObj = Array.isArray(r.insights_payload)
       ? { insights: r.insights_payload, recommendations: [], anomalies: [] }
       : {
-          insights: r.insights_payload?.insights ?? [],
-          recommendations: r.insights_payload?.recommendations ?? [],
-          anomalies: r.insights_payload?.anomalies ?? [],
-        };
+        insights: r.insights_payload?.insights ?? [],
+        recommendations: r.insights_payload?.recommendations ?? [],
+        anomalies: r.insights_payload?.anomalies ?? [],
+      };
 
     res.json({
       queryId: r.id,
@@ -333,7 +339,10 @@ router.get('/history/:queryId', async (req: AuthRequest, res) => {
       validation: {
         isValid: r.validation_status === 'passed',
         sanitizedSql: r.generated_sql ?? '',
-        errors: r.validation_status === 'passed' ? [] : ['Validation did not pass.'],
+        errors:
+          r.validation_status === 'passed' || r.validation_status === 'skipped'
+            ? []
+            : ['Validation did not pass.'],
         warnings: [],
         referencedTables: [],
         appliedRowLimit: config.defaultMaxQueryRows,

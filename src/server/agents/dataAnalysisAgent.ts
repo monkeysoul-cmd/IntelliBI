@@ -9,6 +9,14 @@ function toNumeric(val: unknown): number | null {
   return null;
 }
 
+function isSortablePeriod(label: string): boolean {
+  return /^(\d{4}(-\d{2}(-\d{2})?|-?Q[1-4])?)$/i.test(label.trim());
+}
+
+function isChronoOrderReversed(firstLabel: string, lastLabel: string): boolean {
+  return isSortablePeriod(firstLabel) && isSortablePeriod(lastLabel) && firstLabel.trim() > lastLabel.trim();
+}
+
 function formatMetricVal(col: string, val: number): string {
   const lower = col.toLowerCase();
   if (/(revenue|amount|sales|price|cost|profit|aov|spend|value|gross)/i.test(lower)) {
@@ -73,8 +81,9 @@ export function computeStatisticalAnalysis(
       paired.length >= 2 &&
       /(date|month|quarter|year|week|period)/i.test(labelCol)
     ) {
-      const first = paired[0].value;
-      const last = paired[paired.length - 1].value;
+      const reversed = isChronoOrderReversed(paired[0].label, paired[paired.length - 1].label);
+      const first = reversed ? paired[paired.length - 1].value : paired[0].value;
+      const last = reversed ? paired[0].value : paired[paired.length - 1].value;
       if (Math.abs(first) > 0.0001) {
         trendDeltaPct = Number((((last - first) / Math.abs(first)) * 100).toFixed(1));
       }
@@ -132,8 +141,11 @@ export function computeStatisticalAnalysis(
 
       if (typeof primary.trendDeltaPct === 'number') {
         const verb = primary.trendDeltaPct >= 0 ? 'increased' : 'decreased';
+        const firstLabel = pairedLabel(rows, labelCol, 0);
+        const lastLabel = pairedLabel(rows, labelCol, rows.length - 1);
+        const reversedOrder = isChronoOrderReversed(firstLabel, lastLabel);
         insights.push(
-          `Across the ${rows.length} periods returned, ${colLabel} ${verb} by ${Math.abs(primary.trendDeltaPct).toFixed(1)}% from ${pairedLabel(rows, labelCol, 0)} to ${pairedLabel(rows, labelCol, rows.length - 1)}.`
+            `Across the ${rows.length} periods returned, ${colLabel} ${verb} by ${Math.abs(primary.trendDeltaPct).toFixed(1)}% from ${reversedOrder ? lastLabel : firstLabel} to ${reversedOrder ? firstLabel : lastLabel}.`
         );
       } else if (primary.bottomLabel && primary.bottomLabel !== primary.topLabel && primary.sum > 0) {
         const sharePct = ((primary.max / primary.sum) * 100).toFixed(1);
@@ -142,6 +154,10 @@ export function computeStatisticalAnalysis(
         );
       }
     }
+  } else {
+    insights.push(
+      `The query returned ${rows.length} record${rows.length === 1 ? '' : 's'}, with no non-null numeric metrics available for statistical aggregation.`
+    );
   }
 
   if (anomalies.length > 0) {
