@@ -1,5 +1,5 @@
 import { ThinkingLevel, Type } from '@google/genai';
-import { getActiveModelName, getGeminiClient, withGeminiRetry } from '../core/gemini.ts';
+import { getActiveModelName, getGeminiClient, parseGeminiJson, withGeminiRetry } from '../core/gemini.ts';
 import type { ConversationTurn, QueryAnalysisResult } from './types.ts';
 
 const UNSAFE_INTENT_REGEX =
@@ -55,9 +55,9 @@ export async function analyzeUserQuery(
   const historyText =
     conversationHistory.length > 0
       ? conversationHistory
-          .slice(-4)
-          .map((t, i) => `Turn ${i + 1}: Q="${t.question}" | Summary="${t.summary ?? ''}"`)
-          .join('\n')
+        .slice(-4)
+        .map((t, i) => `Turn ${i + 1}: Q="${t.question}" | Summary="${t.summary ?? ''}"`)
+        .join('\n')
       : 'None (new conversation).';
 
   const prompt = `Analyze the user's business intelligence question for an e-commerce PostgreSQL database containing tables: customers, products, orders, order_items, payments.
@@ -119,7 +119,7 @@ Rules:
     })
   );
 
-  const parsed = JSON.parse((response.text ?? '{}').trim()) as Partial<QueryAnalysisResult>;
+  const parsed = parseGeminiJson<Partial<QueryAnalysisResult>>(response.text, {});
   const normalizedIntent =
     parsed.intent === 'unsafe_request' || parsed.intent === 'clarification_needed'
       ? parsed.intent
@@ -137,7 +137,7 @@ Rules:
     unsafeReason: parsed.unsafeReason ?? null,
     preferredChartHint:
       parsed.preferredChartHint &&
-      ['auto', 'line', 'area', 'bar', 'pie', 'table', 'kpi'].includes(parsed.preferredChartHint)
+        ['auto', 'line', 'area', 'bar', 'pie', 'table', 'kpi'].includes(parsed.preferredChartHint)
         ? parsed.preferredChartHint
         : 'auto',
   };

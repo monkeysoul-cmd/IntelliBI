@@ -56,11 +56,15 @@ async function startServer() {
   // Centralized error handler
   app.use(
     (
-      err: Error,
+      err: Error & { status?: number; type?: string },
       _req: express.Request,
       res: express.Response,
       _next: express.NextFunction
     ) => {
+      if (err instanceof SyntaxError && err.status === 400 && err.type === 'entity.parse.failed') {
+        res.status(400).json({ error: 'Invalid JSON request body.' });
+        return;
+      }
       console.error('Unhandled API error:', err);
       res.status(500).json({ error: 'An unexpected server error occurred.' });
     }

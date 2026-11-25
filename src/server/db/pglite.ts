@@ -38,7 +38,10 @@ export async function getDb(customDataDir?: string): Promise<PGlite> {
     return loader();
   }
 
-  initPromise = loader();
+  initPromise = loader().catch((err) => {
+    initPromise = null;
+    throw err;
+  });
   return initPromise;
 }
 
@@ -214,13 +217,22 @@ async function initializeSchemaAndSeed(pg: PGlite): Promise<void> {
        RETURNING id`,
       ['Elena Vance', 'demo@intellibi.ai', demoHash, 'Lead Data Analyst']
     );
-    const demoUserId = userInsert.rows[0]?.id ?? 1;
-    await pg.query(
-      `INSERT INTO app_settings (user_id, max_rows, query_timeout_ms)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (user_id) DO NOTHING`,
-      [demoUserId, config.defaultMaxQueryRows, config.defaultQueryTimeoutMs]
-    );
+    let demoUserId = userInsert.rows[0]?.id;
+    if (!demoUserId) {
+      const existingDemo = await pg.query<{ id: number }>(
+        'SELECT id FROM app_users WHERE email = $1 LIMIT 1',
+        ['demo@intellibi.ai']
+      );
+      demoUserId = existingDemo.rows[0]?.id;
+    }
+    if (demoUserId) {
+      await pg.query(
+        `INSERT INTO app_settings (user_id, max_rows, query_timeout_ms)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [demoUserId, config.defaultMaxQueryRows, config.defaultQueryTimeoutMs]
+      );
+    }
   }
 
   // Seed analytics dataset only if empty
@@ -535,34 +547,38 @@ export async function executeReadOnlyAnalyticsQuery(
   maxRows: number = config.defaultMaxQueryRows
 ): Promise<SafeSqlExecutionResult> {
   const start = Date.now();
-  const safeTimeout = Math.min(Math.max(Math.floor(timeoutMs), 500), 30000);
+  const safeTimeout = Math.min(
+    Math.max(Math.floor(Number.isFinite(timeoutMs) ? timeoutMs : config.defaultQueryTimeoutMs), 500),
+    30000
+  );
+  const safeMaxRows = Math.min(
+    Math.max(Math.floor(Number.isFinite(maxRows) ? maxRows : config.defaultMaxQueryRows), 1),
+    1000
+  );
 
-  await pg.exec('BEGIN TRANSACTION READ ONLY');
-  try {
-    await pg.exec(`SET LOCAL statement_timeout = '${safeTimeout}ms'`);
-    const result = await pg.query<Record<string, unknown>>(sql);
-    const executionTimeMs = Math.max(1, Date.now() - start);
-    const columns = result.fields.map((f) => f.name);
-    const truncated = result.rows.length > maxRows;
-    const sliced = truncated ? result.rows.slice(0, maxRows) : result.rows;
-    const normalizedRows = sliced.map((row) => {
-      const out: Record<string, unknown> = {};
-      for (const col of columns) {
-        out[col] = normalizeRowValue(row[col]);
-      }
-      return out;
-    });
-    return {
-      columns,
-      rows: normalizedRows,
-      executionTimeMs,
-      truncated,
-    };
-  } finally {
-    try {
-      await pg.exec('ROLLBACK');
-    } catch {
-      // Ignore rollback errors if transaction already aborted
-    }
-  }
+    // Use pg.transaction() so PGlite acquires its internal _transactionMutex,
+    // preventing concurrent queries/writes from interleaving inside the READ ONLY transaction.
+    return pg.transaction(async (tx) => {
+      await tx.exec('SET TRANSACTION READ ONLY');
+      await tx.exec(`SET LOCAL statement_timeout = '${safeTimeout}ms'`);
+      const result = await tx.query<Record<string, unknown>>(sql);
+      const executionTimeMs = Math.max(1, Date.now() - start);
+      const columns = result.fields.map((f) => f.name);
+      const truncated = result.rows.length > safeMaxRows;
+      const sliced = truncated ? result.rows.slice(0, safeMaxRows) : result.rows;
+      const normalizedRows = sliced.map((row) => {
+        const out: Record<string, unknown> = {};
+        for (const col of columns) {
+          out[col] = normalizeRowValue(row[col]);
+        }
+        return out;
+      });
+      await tx.rollback();
+      return {
+        columns,
+        rows: normalizedRows,
+        executionTimeMs,
+        truncated,
+      };
+  });
 }

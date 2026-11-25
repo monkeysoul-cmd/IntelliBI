@@ -241,3 +241,33 @@ test('StateGraph blocks unsafe SQL without ever invoking execution or retries', 
   assert.equal(executed, false);
   await pg.close();
 });
+
+test('executeValidatedSql serializes READ ONLY transactions safely alongside concurrent writes', async () => {
+  const pg = await getDb('memory://');
+
+  const demoUser = await pg.query<{ id: number }>('SELECT id FROM app_users LIMIT 1');
+  const userId = demoUser.rows[0].id;
+
+  await Promise.all([
+    executeValidatedSql(
+      pg,
+      'SELECT c.region, COUNT(*) AS cnt FROM orders o JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.region LIMIT 10',
+      5000,
+      50
+    ),
+    pg.query(
+      `INSERT INTO app_settings (user_id, max_rows, query_timeout_ms)
+       VALUES ($1, 200, 5000)
+       ON CONFLICT (user_id) DO UPDATE SET max_rows = EXCLUDED.max_rows`,
+      [userId]
+    ),
+    executeValidatedSql(pg, 'SELECT COUNT(*) AS orders_count FROM orders LIMIT 1', 5000, 50),
+  ]);
+
+  const check = await pg.query<{ max_rows: number }>(
+    'SELECT max_rows FROM app_settings WHERE user_id = $1',
+    [userId]
+  );
+  assert.equal(check.rows[0].max_rows, 200);
+  await pg.close();
+});

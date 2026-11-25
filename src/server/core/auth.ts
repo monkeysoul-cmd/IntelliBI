@@ -39,8 +39,12 @@ export function verifyAuthToken(token: string): AuthUser | null {
       name: string;
       role: string;
     };
+    const id = Number(decoded.sub);
+    if (!Number.isInteger(id) || id <= 0) {
+      return null;
+    }
     return {
-      id: Number(decoded.sub),
+      id,
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,
@@ -77,29 +81,33 @@ export async function requireAuth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Authentication required. Please sign in.' });
-    return;
-  }
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Authentication required. Please sign in.' });
+      return;
+    }
 
-  const token = authHeader.slice('Bearer '.length).trim();
-  const decoded = verifyAuthToken(token);
-  if (!decoded) {
-    res.status(401).json({ error: 'Invalid or expired authentication token.' });
-    return;
-  }
+    const token = authHeader.slice('Bearer '.length).trim();
+    const decoded = verifyAuthToken(token);
+    if (!decoded) {
+      res.status(401).json({ error: 'Invalid or expired authentication token.' });
+      return;
+    }
 
-  const pg = await getDb();
-  const userRes = await pg.query<AuthUser>(
-    'SELECT id, name, email, role FROM app_users WHERE id = $1 LIMIT 1',
-    [decoded.id]
-  );
-  if (!userRes.rows[0]) {
-    res.status(401).json({ error: 'User account not found.' });
-    return;
-  }
+      const pg = await getDb();
+      const userRes = await pg.query<AuthUser>(
+        'SELECT id, name, email, role FROM app_users WHERE id = $1 LIMIT 1',
+        [decoded.id]
+      );
+      if (!userRes.rows[0]) {
+        res.status(401).json({ error: 'User account not found.' });
+        return;
+      }
 
-  req.user = userRes.rows[0];
-  next();
-}
+      req.user = userRes.rows[0];
+      next();
+    } catch (err) {
+      next(err);
+    }
+  }

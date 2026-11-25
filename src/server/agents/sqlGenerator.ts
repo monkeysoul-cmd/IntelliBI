@@ -1,5 +1,5 @@
 import { ThinkingLevel, Type } from '@google/genai';
-import { getActiveModelName, getGeminiClient, withGeminiRetry } from '../core/gemini.ts';
+import { getActiveModelName, getGeminiClient, parseGeminiJson, withGeminiRetry } from '../core/gemini.ts';
 import type {
   ConversationTurn,
   QueryAnalysisResult,
@@ -28,12 +28,12 @@ export async function generateSqlQuery(
   const historyBlock =
     conversationHistory.length > 0
       ? conversationHistory
-          .slice(-3)
-          .map(
-            (turn, idx) =>
-              `Previous Turn ${idx + 1}:\nQuestion: ${turn.question}\nSQL: ${turn.generatedSql ?? 'N/A'}`
-          )
-          .join('\n\n')
+        .slice(-3)
+        .map(
+          (turn, idx) =>
+            `Previous Turn ${idx + 1}:\nQuestion: ${turn.question}\nSQL: ${turn.generatedSql ?? 'N/A'}`
+        )
+        .join('\n\n')
       : 'None.';
 
   const prompt = `Generate a single PostgreSQL read-only SELECT query to answer the user's business question.
@@ -93,7 +93,7 @@ Strict PostgreSQL Rules:
     })
   );
 
-  const parsed = JSON.parse((response.text ?? '{}').trim()) as Partial<GeneratedSqlPayload>;
+  const parsed = parseGeminiJson<Partial<GeneratedSqlPayload>>(response.text, {});
   return {
     sql: (parsed.sql ?? '').trim(),
     explanation: (parsed.explanation ?? 'Executes a read-only PostgreSQL query against the analytics dataset.').trim(),
@@ -157,7 +157,7 @@ Fix Requirements:
     })
   );
 
-  const parsed = JSON.parse((response.text ?? '{}').trim()) as Partial<GeneratedSqlPayload>;
+  const parsed = parseGeminiJson<Partial<GeneratedSqlPayload>>(response.text, {});
   return {
     sql: (parsed.sql ?? '').trim(),
     explanation: (parsed.explanation ?? 'Corrected PostgreSQL query after analyzing the execution error.').trim(),

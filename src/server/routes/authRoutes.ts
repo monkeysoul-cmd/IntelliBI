@@ -87,7 +87,12 @@ router.post('/register', async (req, res) => {
     const token = signAuthToken(user);
     const settings = await getUserSettings(user.id);
     res.status(201).json({ token, user, settings });
-  } catch (err) {
+  } catch (err: unknown) {
+    const pgCode = (err as { code?: string })?.code;
+    if (pgCode === '23505') {
+      res.status(409).json({ error: 'An account with this email already exists.' });
+      return;
+    }
     console.error('Register error:', err);
     res.status(500).json({ error: 'Unable to create account right now.' });
   }

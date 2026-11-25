@@ -93,3 +93,23 @@ test('computes accurate deterministic stats, trend delta, and outliers', () => {
   assert.equal(analysis.columnStats[0].trendDeltaPct, 400);
   assert.ok(analysis.anomalies.length >= 1, 'Expected June spike to be flagged as an outlier');
 });
+
+test('computes correct chronological trendDeltaPct when periods are sorted descending', () => {
+  const analysis = computeStatisticalAnalysis(
+    ['month', 'revenue'],
+    [
+      { month: '2026-03', revenue: 1500 },
+      { month: '2026-02', revenue: 1200 },
+      { month: '2026-01', revenue: 1000 },
+    ]
+  );
+  assert.equal(analysis.columnStats[0].trendDeltaPct, 50);
+  assert.match(analysis.insights.join(' '), /increased by 50\.0% from 2026-01 to 2026-03/);
+});
+
+test('provides fallback insight when single aggregate row contains only nulls', () => {
+  const analysis = computeStatisticalAnalysis(['revenue'], [{ revenue: null }]);
+  assert.equal(analysis.rowCount, 1);
+  assert.equal(analysis.columnStats.length, 0);
+  assert.equal(analysis.insights.length, 1);
+});
