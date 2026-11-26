@@ -208,10 +208,10 @@ export function AnalystPage() {
         question: item.question,
         generatedSql: item.generatedSql,
         summary: item.answer,
-        insights: item.insights,
+        insights: item.insights ?? [],
         visualization: item.visualization,
-        columns: item.columns,
-        rows: item.rows,
+        columns: item.columns ?? [],
+        rows: item.rows ?? [],
       });
       setSavedReportIds((prev) => ({ ...prev, [item.queryId]: true }));
     } catch {
@@ -335,16 +335,33 @@ export function AnalystPage() {
 
               {/* Failure Banner */}
               {item.executionStatus === 'failed' && (
-                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 text-xs">
-                    <p className="font-semibold text-rose-900 dark:text-rose-200 font-display">
-                      Execution Unsuccessful
-                    </p>
-                    <p className="text-rose-800 dark:text-rose-300/90 leading-relaxed font-sans">
-                      {item.answer}
-                    </p>
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5 text-xs">
+                      <p className="font-semibold text-rose-900 dark:text-rose-200 font-display">
+                        Execution Unsuccessful
+                      </p>
+                      <p className="text-rose-800 dark:text-rose-300/90 leading-relaxed font-sans">
+                        {item.answer}
+                      </p>
+                    </div>
                   </div>
+                  {item.recommendations && item.recommendations.length > 0 && (
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-display">
+                        <Target className="w-3.5 h-3.5" />
+                        <span>Suggested Next Steps</span>
+                      </div>
+                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
+                        {item.recommendations.map((rec, i) => (
+                          <li key={i} className="leading-relaxed">
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -399,8 +416,8 @@ export function AnalystPage() {
                 <div className="pt-2">
                   <DynamicChart
                     config={item.visualization}
-                    columns={item.columns}
-                    rows={item.rows}
+                    columns={item.columns ?? []}
+                    rows={item.rows ?? []}
                   />
                 </div>
               )}
@@ -453,8 +470,8 @@ export function AnalystPage() {
                           onClick={() =>
                             downloadCsvFile(
                               `intellibi-query-${item.queryId}.csv`,
-                              item.columns,
-                              item.rows
+                              item.columns ?? [],
+                              item.rows ?? []
                             )
                           }
                         >
@@ -471,10 +488,10 @@ export function AnalystPage() {
                             title: item.visualization?.title || item.question,
                             question: item.question,
                             summary: item.answer,
-                            insights: item.insights,
+                            insights: item.insights ?? [],
                             generatedSql: item.generatedSql,
-                            columns: item.columns,
-                            rows: item.rows,
+                            columns: item.columns ?? [],
+                            rows: item.rows ?? [],
                             createdAt: item.createdAt,
                           })
                         }

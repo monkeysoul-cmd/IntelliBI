@@ -128,3 +128,12 @@ test('rejects unauthorized comma-joined or double-quoted tables in PostgreSQL ex
   assert.equal(res.isValid, false);
   assert.equal(res.securityBlocked, true);
 });
+
+test('allows nested EXTRACT/DATE_TRUNC PostgreSQL expressions without false schema errors', () => {
+  const res = validateAndSanitizeSql(
+    "SELECT EXTRACT(YEAR FROM DATE_TRUNC('month', o.order_date))::int AS yr, SUM(o.total_amount) FILTER (WHERE o.order_status <> 'Cancelled') AS rev FROM orders o GROUP BY 1 LIMIT 10",
+    100
+  );
+  assert.equal(res.isValid, true);
+  assert.deepEqual(res.referencedTables, ['orders']);
+});
