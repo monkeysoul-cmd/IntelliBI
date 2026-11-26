@@ -127,9 +127,11 @@ export function exportReportToPdf(params: {
   cursorY += 22;
 
   // Title
+  const safeTitle = params.title || 'Analytics Report';
+  const safeQuestion = params.question || '';
   doc.setFontSize(18);
   doc.setTextColor(15, 23, 42);
-  const titleLines = doc.splitTextToSize(params.title, 505);
+  const titleLines = doc.splitTextToSize(safeTitle, 505);
   doc.text(titleLines, marginX, cursorY);
   cursorY += titleLines.length * 22 + 4;
 
@@ -157,7 +159,7 @@ export function exportReportToPdf(params: {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(51, 65, 85);
-  const qLines = doc.splitTextToSize(params.question, 505);
+  const qLines = doc.splitTextToSize(safeQuestion, 505);
   doc.text(qLines, marginX, cursorY);
   cursorY += qLines.length * 14 + 12;
 
@@ -228,7 +230,7 @@ export function exportReportToPdf(params: {
   }
 
   const slug =
-    params.title
+    safeTitle
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '') || 'intellibi-report';

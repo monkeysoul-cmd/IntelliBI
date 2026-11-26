@@ -86,8 +86,10 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
     return 'number';
   }, [config.valueFormat, safeYKeys]);
 
+  const safeRows = useMemo(() => rows || [], [rows]);
+  const safeColumns = useMemo(() => columns || [], [columns]);
+
   const chartData = useMemo(() => {
-    const safeRows = rows || [];
     return safeRows.slice(0, 40).map((row) => {
       const normalized: Record<string, unknown> = { ...row };
       for (const yk of safeYKeys) {
@@ -98,15 +100,15 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
       normalized.__shortLabel = rawLabel.length > 20 ? `${rawLabel.slice(0, 18)}…` : rawLabel;
       return normalized;
     });
-  }, [rows, config.xKey, safeYKeys]);
+  }, [safeRows, config.xKey, safeYKeys]);
 
   const filteredTableRows = useMemo(() => {
     const q = tableFilter.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) =>
-      columns.some((c) => String(row[c] ?? '').toLowerCase().includes(q))
+    if (!q) return safeRows;
+    return safeRows.filter((row) =>
+      safeColumns.some((c) => String(row[c] ?? '').toLowerCase().includes(q))
     );
-  }, [rows, columns, tableFilter]);
+  }, [safeRows, safeColumns, tableFilter]);
 
   const formatAxisTick = (value: number) => {
     if (effectiveFormat === 'currency') return formatCurrency(value, true);
@@ -180,7 +182,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
       </div>
 
       {/* Render Chart Body */}
-      {rows.length === 0 ? (
+      {safeRows.length === 0 ? (
         <div
           style={{ height }}
           className="w-full flex flex-col items-center justify-center p-6 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-white/[0.08] rounded-xl"
@@ -206,7 +208,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
               </span>
               <button
                 type="button"
-                onClick={() => downloadCsvFile('analytics-data.csv', columns, rows)}
+                onClick={() => downloadCsvFile('analytics-data.csv', safeColumns, safeRows)}
                 className="inline-flex items-center gap-1 h-7.5 px-2.5 text-xs font-medium rounded-md border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
               >
                 <Download className="w-3 h-3" />
@@ -219,7 +221,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-50 dark:bg-white/[0.03] text-slate-700 dark:text-slate-300 border-b border-slate-200/80 dark:border-white/[0.07] sticky top-0 z-10">
                 <tr>
-                  {columns.map((col) => (
+                  {safeColumns.map((col) => (
                     <th
                       key={col}
                       className="px-3 py-2 font-semibold font-mono tracking-tight whitespace-nowrap"
@@ -235,7 +237,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                     key={idx}
                     className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
                   >
-                    {columns.map((col) => (
+                    {safeColumns.map((col) => (
                       <td
                         key={col}
                         className={cn(
@@ -254,24 +256,51 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
         </div>
       ) : activeView === 'kpi' ? (
         <div
-          style={{ height }}
+          style={{ minHeight: height }}
           className="w-full flex flex-col items-center justify-center p-6 rounded-xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05]"
         >
-          <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider mb-2">
-            {safeYKeys[0] ? formatColumnHeader(safeYKeys[0]) : config.title}
-          </span>
-          <div className="text-3xl sm:text-4xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-            {chartData[0] && safeYKeys[0]
-              ? formatCellValue(safeYKeys[0], chartData[0][safeYKeys[0]])
-              : chartData[0] && Object.values(chartData[0])[0] !== undefined
-                ? String(Object.values(chartData[0])[0])
-                : '—'}
-          </div>
+          {safeYKeys.length > 1 && chartData[0] ? (
+            <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {safeYKeys.map((yk) => (
+                <div
+                  key={yk}
+                  className="p-4 rounded-xl bg-white dark:bg-[#11141D] border border-slate-200/80 dark:border-white/[0.08] text-center"
+                >
+                  <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider block mb-1.5">
+                    {formatColumnHeader(yk)}
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+                    {formatCellValue(yk, chartData[0][yk])}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider mb-2">
+                {safeYKeys[0] ? formatColumnHeader(safeYKeys[0]) : config.title}
+              </span>
+              <div className="text-3xl sm:text-4xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+                {chartData[0] && safeYKeys[0]
+                  ? formatCellValue(safeYKeys[0], chartData[0][safeYKeys[0]])
+                  : chartData[0] && Object.values(chartData[0])[0] !== undefined
+                    ? String(Object.values(chartData[0])[0])
+                    : '—'}
+              </div>
+            </>
+          )}
           {config.subtitle && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center max-w-sm font-sans">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 text-center max-w-sm font-sans">
               {config.subtitle}
             </p>
           )}
+        </div>
+      ) : safeYKeys.length === 0 ? (
+        <div
+          style={{ height }}
+          className="w-full flex flex-col items-center justify-center p-6 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-white/[0.08] rounded-xl"
+        >
+          No numeric metric series available to plot. Switch to Table view to inspect rows.
         </div>
       ) : (
         <div style={{ height }} className="w-full relative">
@@ -279,7 +308,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
             {activeView === 'area' ? (
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
-                  {config.yKeys.map((key, i) => {
+                  {safeYKeys.map((key, i) => {
                     const color = SERIES_COLORS[i % SERIES_COLORS.length];
                     return (
                       <linearGradient key={key} id={`areaGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -321,8 +350,8 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                     padding: '8px 12px',
                   }}
                 />
-                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
-                {config.yKeys.map((key, i) => (
+                {safeYKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {safeYKeys.map((key, i) => (
                   <Area
                     key={key}
                     type="monotone"
@@ -369,8 +398,8 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                     padding: '8px 12px',
                   }}
                 />
-                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
-                {config.yKeys.map((key, i) => (
+                {safeYKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {safeYKeys.map((key, i) => (
                   <Line
                     key={key}
                     type="monotone"
@@ -398,7 +427,7 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Pie
                   data={chartData}
-                  dataKey={config.yKeys[0] || 'value'}
+                  dataKey={safeYKeys[0] || 'value'}
                   nameKey={config.xKey || 'name'}
                   cx="50%"
                   cy="50%"
@@ -449,8 +478,8 @@ export function DynamicChart({ config, columns, rows, height = 310 }: DynamicCha
                     padding: '8px 12px',
                   }}
                 />
-                {config.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
-                {config.yKeys.map((key, i) => (
+                {safeYKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+                {safeYKeys.map((key, i) => (
                   <Bar
                     key={key}
                     dataKey={key}

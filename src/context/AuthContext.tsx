@@ -80,6 +80,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bootstrap();
   }, [bootstrap]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setIsSignedOut(true);
+    };
+    window.addEventListener('intellibi:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('intellibi:unauthorized', handleUnauthorized);
+  }, []);
+
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     window.sessionStorage.removeItem('intellibi_signed_out');

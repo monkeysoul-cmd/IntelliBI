@@ -15,17 +15,23 @@ export function ReportsPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+    setError(null);
     reportsApi
       .list()
       .then((res) => {
         if (!active) return;
-        setReports(res.reports);
-        if (res.reports.length > 0) {
-          setSelectedId(res.reports[0].id);
+        const list = res.reports ?? [];
+        setReports(list);
+        if (list.length > 0) {
+          setSelectedId(list[0].id);
         }
+      })
+      .catch(() => {
+        if (active) setError('Unable to load saved reports from PostgreSQL.');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -38,6 +44,7 @@ export function ReportsPage() {
   const activeReport = reports.find((r) => r.id === selectedId) ?? reports[0] ?? null;
 
   const handleDelete = async (id: number) => {
+    setError(null);
     setDeletingId(id);
     try {
       await reportsApi.remove(id);
@@ -48,8 +55,19 @@ export function ReportsPage() {
         }
         return next;
       });
+    } catch {
+      setError('Failed to delete report. Please try again.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDownload = async (id: number, format: 'csv' | 'md', filename: string) => {
+    setError(null);
+    try {
+      await reportsApi.download(id, format, filename);
+    } catch {
+      setError(`Failed to download ${format.toUpperCase()} export.`);
     }
   };
 
@@ -73,6 +91,15 @@ export function ReportsPage() {
           <span>Create Report in AI</span>
         </Button>
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300"
+        >
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -157,11 +184,22 @@ export function ReportsPage() {
                     size="xs"
                     variant="secondary"
                     onClick={() =>
-                      reportsApi.download(activeReport.id, 'csv', slugify(activeReport.title))
+                      handleDownload(activeReport.id, 'csv', slugify(activeReport.title))
                     }
                   >
                     <Download className="w-3 h-3" />
                     <span>CSV</span>
+                  </Button>
+
+                  <Button
+                    size="xs"
+                    variant="secondary"
+                    onClick={() =>
+                      handleDownload(activeReport.id, 'md', slugify(activeReport.title))
+                    }
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>MD</span>
                   </Button>
 
                   <Button

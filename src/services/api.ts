@@ -54,7 +54,11 @@ apiClient.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
+      const hadToken = Boolean(authTokenMemory);
       setAuthToken(null);
+      if (hadToken && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('intellibi:unauthorized'));
+      }
     }
     return Promise.reject(err);
   }
@@ -113,6 +117,7 @@ export const dashboardApi = {
   },
   async getRegions(params?: {
     year?: string;
+    region?: string;
     category?: string;
   }): Promise<{ regions: RegionMetricRow[]; categories: CategoryMetricRow[] }> {
     const { data } = await apiClient.get('/dashboard/regions', { params });
@@ -162,7 +167,8 @@ export const analyticsApi = {
         summary?: string | null;
       }>;
     },
-    handlers: StreamHandlers
+    handlers: StreamHandlers,
+    signal?: AbortSignal
   ): Promise<void> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -175,11 +181,16 @@ export const analyticsApi = {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
+      signal,
     });
 
     if (!res.ok) {
       if (res.status === 401) {
+        const hadToken = Boolean(authTokenMemory);
         setAuthToken(null);
+        if (hadToken && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('intellibi:unauthorized'));
+        }
       }
       let msg = `Request failed (${res.status})`;
       try {
@@ -202,44 +213,56 @@ export const analyticsApi = {
     let buffer = '';
     let receivedTerminal = false;
 
+    const processChunk = (chunk: string) => {
+      const line = chunk
+        .split(/\r?\n/)
+        .find((l) => l.trimStart().startsWith('data: '));
+      if (!line) return;
+      try {
+        const raw = line.slice(line.indexOf('data: ') + 6).trim();
+        const event = JSON.parse(raw);
+        if (event.type === 'node_start' || event.type === 'node_complete') {
+          handlers.onNodeEvent?.({
+            node: event.node,
+            label: event.label,
+            status: event.status,
+            durationMs: event.durationMs ?? 0,
+            detail: event.detail,
+          });
+        } else if (event.type === 'result') {
+          receivedTerminal = true;
+          handlers.onResult(event.payload as AnalyticsQueryResponse);
+        } else if (event.type === 'error') {
+          receivedTerminal = true;
+          handlers.onError(event.error || 'Workflow execution failed.');
+        }
+      } catch {
+        // Ignore malformed chunk
+      }
+    };
+
     while (true) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done) {
+        buffer += decoder.decode();
+        if (buffer.trim()) {
+          for (const chunk of buffer.split(/\r?\n\r?\n/)) {
+            if (chunk.trim()) processChunk(chunk);
+          }
+        }
+        break;
+      }
       buffer += decoder.decode(value, { stream: true });
 
-      const chunks = buffer.split('\n\n');
+      const chunks = buffer.split(/\r?\n\r?\n/);
       buffer = chunks.pop() ?? '';
 
       for (const chunk of chunks) {
-        const line = chunk
-          .split('\n')
-          .find((l) => l.trimStart().startsWith('data: '));
-        if (!line) continue;
-        try {
-          const raw = line.slice(line.indexOf('data: ') + 6).trim();
-          const event = JSON.parse(raw);
-          if (event.type === 'node_start' || event.type === 'node_complete') {
-            handlers.onNodeEvent?.({
-              node: event.node,
-              label: event.label,
-              status: event.status,
-              durationMs: event.durationMs ?? 0,
-              detail: event.detail,
-            });
-          } else if (event.type === 'result') {
-            receivedTerminal = true;
-            handlers.onResult(event.payload as AnalyticsQueryResponse);
-          } else if (event.type === 'error') {
-            receivedTerminal = true;
-            handlers.onError(event.error || 'Workflow execution failed.');
-          }
-        } catch {
-          // Ignore malformed chunk
-        }
+        processChunk(chunk);
       }
     }
 
-    if (!receivedTerminal) {
+    if (!receivedTerminal && !signal?.aborted) {
       handlers.onError('The analytics stream closed before completing. Please try again.');
     }
   },

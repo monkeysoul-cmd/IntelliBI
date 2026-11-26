@@ -443,10 +443,26 @@ const ALLOWED_TABLES_SET = new Set<string>(config.allowedAnalyticsTables);
         // can occasionally trip node-sql-parser. Check if it's purely a parser dialect quirk vs real syntax error.
         const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
         // Strip PostgreSQL expressions that legitimately contain FROM inside parentheses (EXTRACT, TRIM, SUBSTRING, OVERLAY)
-        const fallbackTarget = scanTarget.replace(
-          /\b(?:EXTRACT|TRIM|SUBSTRING|OVERLAY)\s*\([^()]*\)/gi,
-          ' __pg_expr__ '
-        );
+        const stripFromFunctions = (input: string): string => {
+          const re = /\b(?:EXTRACT|TRIM|SUBSTRING|OVERLAY)\s*\(/gi;
+          let result = '';
+          let cursor = 0;
+          let match: RegExpExecArray | null;
+          while ((match = re.exec(input)) !== null) {
+            result += input.slice(cursor, match.index) + ' __pg_expr__ ';
+            let depth = 1;
+            let pos = re.lastIndex;
+            while (pos < input.length && depth > 0) {
+              if (input[pos] === '(') depth++;
+              else if (input[pos] === ')') depth--;
+              pos++;
+            }
+            cursor = pos;
+            re.lastIndex = pos;
+          }
+          return result + input.slice(cursor);
+        };
+        const fallbackTarget = stripFromFunctions(scanTarget);
 
         // Fallback table extraction ONLY for PostgreSQL-specific valid SELECT constructs
         const cteMatches = [...fallbackTarget.matchAll(/\bWITH\s+(?:RECURSIVE\s+)?([a-z_][a-z0-9_]*)\s+AS\s*\(|,\s*([a-z_][a-z0-9_]*)\s+AS\s*\(/gi)];

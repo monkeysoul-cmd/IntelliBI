@@ -50,11 +50,23 @@ export function AnalystPage() {
   const [feedbackMap, setFeedbackMap] = useState<Record<number, 'helpful' | 'needs_improvement'>>({});
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const initializedParamRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const runQuestion = useCallback(
-    async (questionText: string, existingHistory: AnalyticsQueryResponse[]) => {
+    async (questionText: string, existingHistory: AnalyticsQueryResponse[], forceReplace = false) => {
       const cleaned = questionText.trim();
-      if (!cleaned || isStreaming) return;
+      if (!cleaned) return;
+      if (isStreaming && !forceReplace) return;
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
       setError(null);
       setIsStreaming(true);
@@ -79,6 +91,7 @@ export function AnalystPage() {
           },
           {
             onNodeEvent: (step) => {
+              if (controller.signal.aborted) return;
               setLiveSteps((prev) => {
                 const idx = prev.findIndex(
                   (s) => s.node === step.node && s.status === 'running'
@@ -92,22 +105,30 @@ export function AnalystPage() {
               });
             },
             onResult: (result) => {
+              if (controller.signal.aborted) return;
               setMessages((prev) => [...prev, result]);
               setActiveQuestion(null);
               setLiveSteps([]);
               setIsStreaming(false);
             },
             onError: (msg) => {
+              if (controller.signal.aborted) return;
               setError(msg);
               setActiveQuestion(null);
               setIsStreaming(false);
             },
-          }
+          },
+          controller.signal
         );
       } catch (err: unknown) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Unexpected network error during analysis.');
         setActiveQuestion(null);
         setIsStreaming(false);
+      } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
     },
     [conversationId, isStreaming]
@@ -128,6 +149,10 @@ export function AnalystPage() {
     if (historyIdParam) {
       const id = Number(historyIdParam);
       if (Number.isInteger(id) && id > 0) {
+        abortControllerRef.current?.abort();
+        setIsStreaming(false);
+        setActiveQuestion(null);
+        setLiveSteps([]);
         analyticsApi
           .getHistoryItem(id)
           .then((record) => {
@@ -145,7 +170,7 @@ export function AnalystPage() {
 
     if (qParam) {
       setSearchParams({}, { replace: true });
-      runQuestion(qParam, []);
+      runQuestion(qParam, [], true);
     }
   }, [searchParams, setSearchParams, runQuestion]);
 
@@ -162,6 +187,9 @@ export function AnalystPage() {
   };
 
   const handleNewSession = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsStreaming(false);
     setConversationId(`conv-${Date.now()}`);
     setMessages([]);
     setError(null);
@@ -327,21 +355,24 @@ export function AnalystPage() {
                     {item.answer}
                   </p>
 
-                  {item.insights && item.insights.length > 0 && (
+                  {((item.insights && item.insights.length > 0) ||
+                    (item.recommendations && item.recommendations.length > 0)) && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 font-display">
-                          <Lightbulb className="w-3.5 h-3.5" />
-                          <span>Key Findings</span>
+                      {item.insights && item.insights.length > 0 && (
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 font-display">
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            <span>Key Findings</span>
+                          </div>
+                          <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
+                            {item.insights.map((ins, i) => (
+                              <li key={i} className="leading-relaxed">
+                                {ins}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
-                          {item.insights.map((ins, i) => (
-                            <li key={i} className="leading-relaxed">
-                              {ins}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      )}
 
                       {item.recommendations && item.recommendations.length > 0 && (
                         <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">

@@ -174,8 +174,10 @@ router.post('/query/stream', aiRateLimiter, async (req: AuthRequest, res) => {
   }
 
   let clientClosed = false;
-  req.on('close', () => {
-    clientClosed = true;
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      clientClosed = true;
+    }
   });
 
   res.setHeader('Content-Type', 'text/event-stream');
