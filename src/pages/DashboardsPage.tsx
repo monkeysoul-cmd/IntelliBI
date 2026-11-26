@@ -53,7 +53,7 @@ export function DashboardsPage() {
     Promise.all([
       dashboardApi.getRevenue({ year, region, category }),
       dashboardApi.getProducts({ year, region, category, limit: 24 }),
-      dashboardApi.getRegions({ year, category }),
+      dashboardApi.getRegions({ year, region, category }),
     ])
       .then(([revRes, prodRes, regRes]) => {
         if (!active) return;
