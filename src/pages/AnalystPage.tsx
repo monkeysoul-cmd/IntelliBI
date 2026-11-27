@@ -503,13 +503,15 @@ export function AnalystPage() {
                                                                                               </div>
 
                                                                                               <div className="flex items-center gap-1">
-                                                                                                <button
-                                                                                                  type="button"
-                                                                                                  onClick={() => handleFeedback(item.queryId, 'helpful')}
-                                                                                                  aria-label={`Mark query ${item.queryId} helpful`}
-                                                                                                          ? 'text-[#16a34a] bg-[#f0fdf4] dark:bg-[#4cc38a]/12 dark:text-[#4cc38a]'
-                                                                                                          : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
-                                                                                                      }`}
+                  <button
+                    type="button"
+                    onClick={() => handleFeedback(item.queryId, 'helpful')}
+                    aria-label={`Mark query ${item.queryId} helpful`}
+                    className={`p-1.5 rounded-md transition-colors duration-150 cursor-pointer ${
+                      feedbackMap[item.queryId] === 'helpful'
+                        ? 'text-[#16a34a] bg-[#f0fdf4] dark:bg-[#4cc38a]/12 dark:text-[#4cc38a]'
+                        : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
+                    }`}
                   >
                     <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
                   </button>
@@ -517,9 +519,11 @@ export function AnalystPage() {
                     type="button"
                     onClick={() => handleFeedback(item.queryId, 'needs_improvement')}
                     aria-label={`Mark query ${item.queryId} needs improvement`}
-                                                                                                        ? 'text-[#dc2626] bg-[#fef2f2] dark:bg-[#e5484d]/12 dark:text-[#e5484d]'
-                                                                                                        : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
-                                                                                                    }`}
+                    className={`p-1.5 rounded-md transition-colors duration-150 cursor-pointer ${
+                      feedbackMap[item.queryId] === 'needs_improvement'
+                        ? 'text-[#dc2626] bg-[#fef2f2] dark:bg-[#e5484d]/12 dark:text-[#e5484d]'
+                        : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
+                    }`}
                   >
                     <ThumbsDown className="w-4 h-4" strokeWidth={1.5} />
                   </button>

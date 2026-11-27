@@ -71,12 +71,14 @@ export function AuthScreen() {
                           setMode('login');
                           setError(null);
                         }}
-                                ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
-                                : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
-                            }`}
-            >
-              Sign in
-            </button>
+                        className={`h-8 text-xs font-medium rounded-md transition-colors duration-150 cursor-pointer ${
+                          mode === 'login'
+                            ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                            : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                        }`}
+                      >
+                        Sign in
+                      </button>
             <button
               type="button"
               role="tab"

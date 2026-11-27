@@ -17,8 +17,8 @@ function WorkspaceRouter() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#090D16] text-slate-600 dark:text-slate-300 text-sm">
-        Initializing IntelliBI analytics workspace...
+      <div className="min-h-screen flex items-center justify-center bg-[#fafafa] dark:bg-[#141415] text-[#525252] dark:text-[#a1a1a6] text-sm">
+        Loading workspace
       </div>
     );
   }

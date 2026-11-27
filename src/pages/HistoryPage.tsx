@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, CheckCircle2, Clock, Plus, Search, ShieldAlert, XCircle } from 'lucide-react';
+import { ArrowUpRight, Clock, Plus, Search } from 'lucide-react';
 import { analyticsApi } from '../services/api';
 import type { QueryHistoryItem } from '../types/api';
 import { Badge, Button, Skeleton, Surface } from '../components/ui/Primitives';
@@ -40,62 +40,65 @@ export function HistoryPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
-            Query Audit History
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Audit trail of natural language questions, AST-verified SQL statements, and execution performance
-          </p>
-        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]">
+          <div>
+              <h1 className="text-2xl sm:text-3xl font-medium text-[#171717] dark:text-[#ededed]">
+                Query history
+              </h1>
+                <p className="text-sm text-[#737373] dark:text-[#85858b] mt-1">
+                  Audit log of natural-language inquiries, AST-verified SQL, and latency
+                </p>
+              </div>
 
-        <Button variant="primary" size="sm" onClick={() => navigate('/analyst')}>
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Query</span>
-        </Button>
-      </div>
+              <Button variant="primary" size="sm" onClick={() => navigate('/analyst')}>
+                <Plus className="w-4 h-4" strokeWidth={1.5} />
+                <span>New query</span>
+              </Button>
+          </div>
 
-      {/* Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search questions or SQL statements..."
-            aria-label="Search query history"
-            className="w-full h-8.5 pl-8.5 pr-3 text-xs rounded-lg bg-white dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+          {/* Filter Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search
+                className="w-4 h-4 text-[#737373] dark:text-[#85858b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                strokeWidth={1.5}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search"
+                aria-label="Search query history"
+                className="w-full h-9 pl-9 pr-3 text-xs rounded-lg bg-white dark:bg-[#19191b] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] text-[#171717] dark:text-[#ededed] placeholder:text-[#737373] dark:placeholder:text-[#85858b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40 transition-colors duration-150"
+              />
+            </div>
 
-        <div
-          className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.08]"
-          role="tablist"
-          aria-label="Filter query history by status"
-        >
-          {(['all', 'succeeded', 'blocked', 'failed'] as const).map((st) => (
-            <button
-              key={st}
-              type="button"
-              role="tab"
-              aria-selected={statusFilter === st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md capitalize transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                statusFilter === st
-                  ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+            <div
+              className="inline-flex items-center p-1 rounded-lg bg-[#f4f4f5] dark:bg-[#232325] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]"
+              role="tablist"
+              aria-label="Filter query history by status"
             >
-              {st}
-            </button>
+              {(['all', 'succeeded', 'blocked', 'failed'] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`h-7 px-3 text-xs font-medium rounded-md capitalize transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
+                    statusFilter === st
+                      ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                      : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                  }`}
+                >
+                  {st}
+                </button>
           ))}
         </div>
       </div>
 
       {/* Results List */}
-      <Surface className="divide-y divide-slate-100 dark:divide-white/[0.05]">
+      <Surface className="divide-y divide-[#171717]/[0.06] dark:divide-[#ededed]/[0.06]">
         {loading ? (
           <div className="p-5 space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -103,30 +106,30 @@ export function HistoryPage() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="p-12 text-center space-y-2.5">
-            <Clock className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-            <p className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-              No matching queries found
+          <div className="p-12 text-center space-y-3">
+            <Clock className="w-6 h-6 text-[#737373] dark:text-[#85858b] mx-auto" strokeWidth={1.5} />
+            <p className="text-sm font-medium text-[#171717] dark:text-[#ededed]">
+              No matching queries
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              Execute an inquiry in the AI Analyst or adjust your search filter.
+            <p className="text-xs text-[#737373] dark:text-[#85858b] max-w-sm mx-auto">
+              Run a question in the AI Analyst or adjust your status filter.
             </p>
             <Button variant="secondary" size="xs" onClick={() => navigate('/analyst')}>
-              Launch AI Analyst
+              Open AI Analyst
             </Button>
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.id}
-              className="p-4.5 space-y-2.5 hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors"
+              className="p-5 space-y-3 hover:bg-[#fafafa] dark:hover:bg-[#232325]/30 transition-colors duration-150"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
+                <div className="min-w-0 space-y-1.5">
+                  <h2 className="text-sm font-medium text-[#171717] dark:text-[#ededed]">
                     {item.question}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373] dark:text-[#85858b] font-mono">
                     <Badge
                       variant={
                         item.executionStatus === 'succeeded'
@@ -139,14 +142,13 @@ export function HistoryPage() {
                     >
                       {item.executionStatus}
                     </Badge>
-                    <span aria-hidden="true">·</span>
                     <span className="tabular-nums">{item.rowCount} rows</span>
                     <span aria-hidden="true">·</span>
                     <span className="tabular-nums">{item.executionTimeMs}ms</span>
                     {item.retryCount > 0 && (
                       <>
                         <span aria-hidden="true">·</span>
-                        <span className="tabular-nums text-amber-500">
+                        <span className="tabular-nums text-[#b45309] dark:text-[#fbbf24]">
                           {item.retryCount} correction{item.retryCount > 1 ? 's' : ''}
                         </span>
                       </>
@@ -159,21 +161,21 @@ export function HistoryPage() {
                 <Button
                   size="xs"
                   variant="secondary"
-                  onClick={() => navigate(`/analyst?historyId=${item.id}`)}
+                  onClick={() => navigate(`/ analyst ? historyId = ${item.id}`)}
                 >
                   <span>Reopen</span>
-                  <ArrowUpRight className="w-3 h-3" />
+                  <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
                 </Button>
               </div>
 
               {item.resultSummary && (
-                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 font-sans">
+                <p className="text-xs text-[#525252] dark:text-[#a1a1a6] line-clamp-2">
                   {item.resultSummary}
                 </p>
               )}
 
               {item.generatedSql && (
-                <pre className="p-2.5 rounded-lg bg-[#0A0D14] border border-white/[0.06] text-blue-100 font-mono text-[11px] overflow-x-auto max-h-24">
+                <pre className="p-3 rounded-lg bg-[#0f0f10] border border-[#171717]/[0.1] dark:border-[#ededed]/[0.08] text-[#ededed]/90 font-mono text-xs overflow-x-auto max-h-24">
                   <code>{item.generatedSql}</code>
                 </pre>
               )}
