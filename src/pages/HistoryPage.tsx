@@ -85,12 +85,14 @@ export function HistoryPage() {
                   role="tab"
                   aria-selected={statusFilter === st}
                   onClick={() => setStatusFilter(st)}
-                          ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
-                          : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
-                      }`}
-            >
-              {st}
-            </button>
+                  className={`h-7 px-3 text-xs font-medium rounded-md capitalize transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
+                    statusFilter === st
+                      ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                      : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                  }`}
+                >
+                  {st}
+                </button>
           ))}
         </div>
       </div>

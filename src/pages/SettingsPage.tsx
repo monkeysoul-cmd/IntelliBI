@@ -149,13 +149,15 @@ export function SettingsPage() {
                                       role="tab"
                                       aria-selected={theme === 'light'}
                                       onClick={() => setTheme('light')}
-                                              ? 'bg-white text-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.05)]'
-                                              : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
-                                          }`}
-          >
-            <Sun className="w-4 h-4" strokeWidth={1.5} />
-            <span>Light</span>
-          </button>
+                                      className={`inline-flex items-center gap-1.5 h-7 px-3 text-xs font-medium rounded-md transition-colors duration-150 cursor-pointer ${
+                                        theme === 'light'
+                                          ? 'bg-white text-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.05)]'
+                                          : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                                      }`}
+                                    >
+                                      <Sun className="w-4 h-4" strokeWidth={1.5} />
+                                      <span>Light</span>
+                                    </button>
           <button
             type="button"
             role="tab"

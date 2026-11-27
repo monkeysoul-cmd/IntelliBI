@@ -136,12 +136,14 @@ export function OverviewPage() {
                         role="tab"
                         aria-selected={yearFilter === yr}
                         onClick={() => setYearFilter(yr)}
-                                ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
-                                : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed]'
-                            }`}
-              >
-                {yr === 'all' ? 'All time' : yr}
-              </button>
+                        className={`h-7 px-3 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
+                          yearFilter === yr
+                            ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                            : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed]'
+                        }`}
+                      >
+                        {yr === 'all' ? 'All time' : yr}
+                      </button>
             ))}
           </div>
 
