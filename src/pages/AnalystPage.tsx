@@ -3,37 +3,34 @@ import { useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   BookmarkPlus,
-  Bot,
   Check,
   Download,
   FileDown,
-  Layers,
   Lightbulb,
   Loader2,
   Plus,
   RefreshCw,
   Send,
   ShieldAlert,
-  Sparkles,
   Target,
   ThumbsDown,
   ThumbsUp,
 } from 'lucide-react';
 import { analyticsApi, reportsApi } from '../services/api';
 import type { AnalyticsQueryResponse, PipelineTraceStep } from '../types/api';
-import { Badge, Button, Keycap, Surface } from '../components/ui/Primitives';
+import { Button, Keycap, Surface } from '../components/ui/Primitives';
 import { DynamicChart } from '../components/charts/DynamicChart';
 import { AgentPipelineTrace } from '../components/analyst/AgentPipelineTrace';
 import { SqlViewer } from '../components/analyst/SqlViewer';
 import { downloadCsvFile, exportReportToPdf } from '../utils/formatters';
 
 const SUGGESTED_QUESTIONS = [
-  { label: 'Revenue Trends', q: 'What was our total revenue this month compared to last month?' },
-  { label: 'Product Margin', q: 'Which products generated the highest revenue and margins?' },
-  { label: 'Regional Share', q: 'Which region has the highest customer acquisition and order volume?' },
-  { label: 'Quarterly Sales', q: 'Compare quarterly sales trends between 2025 and 2026.' },
-  { label: 'Churn Risk', q: 'Identify customers whose purchases have declined or ceased.' },
-  { label: 'Average Ticket', q: 'What is the average order value by region and category?' },
+  { label: 'Revenue trends', q: 'What was our total revenue this month compared to last month?' },
+  { label: 'Product margin', q: 'Which products generated the highest revenue and margins?' },
+  { label: 'Regional share', q: 'Which region has the highest customer acquisition and order volume?' },
+  { label: 'Quarterly sales', q: 'Compare quarterly sales trends between 2025 and 2026.' },
+  { label: 'Churn risk', q: 'Identify customers whose purchases have declined or ceased.' },
+  { label: 'Average ticket', q: 'What is the average order value by region and category?' },
 ];
 
 export function AnalystPage() {
@@ -134,7 +131,6 @@ export function AnalystPage() {
     [conversationId, isStreaming]
   );
 
-  // Handle incoming ?q= or ?historyId= query parameters
   useEffect(() => {
     const qParam = searchParams.get('q');
     const historyIdParam = searchParams.get('historyId');
@@ -231,312 +227,301 @@ export function AnalystPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-5">
-      {/* Page Title & Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-            <Bot className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
-                AI Business Analyst
-              </h1>
-              <Badge variant="blue">Autonomous Graph</Badge>
+      <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-6">
+        {/* Page Title & Controls */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-medium text-[#171717] dark:text-[#ededed]">
+                  AI Business Analyst
+                </h1>
+                <p className="text-sm text-[#737373] dark:text-[#85858b] mt-1">
+                  Natural-language questions compiled into AST-verified read-only PostgreSQL queries
+                </p>
+              </div>
+
+              {messages.length > 0 && (
+                <Button variant="secondary" size="sm" onClick={handleNewSession}>
+                  <Plus className="w-4 h-4" strokeWidth={1.5} />
+                  <span>New analysis</span>
+                </Button>
+              )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Natural language questions compiled to AST-verified read-only PostgreSQL SQL
-            </p>
-          </div>
-        </div>
 
-        {messages.length > 0 && (
-          <Button variant="secondary" size="sm" onClick={handleNewSession}>
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Analysis</span>
-          </Button>
-        )}
-      </div>
+            {/* Empty State Welcome & Prompt Deck */}
+            {messages.length === 0 && !isStreaming && (
+                <Surface className="p-6 space-y-6">
+                  <div className="max-w-2xl space-y-2">
+                      <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+                        Query the PostgreSQL dataset in plain English
+                      </h2>
+                        <p className="text-sm text-[#525252] dark:text-[#a1a1a6] leading-relaxed">
+                          Each inquiry runs through a 9-node verification graph that inspects schema relationships, generates read-only SQL, checks AST constraints, executes in a bounded transaction, and summarizes exact results.
+                        </p>
+                      </div>
 
-      {/* Empty State Welcome & Prompt Deck */}
-      {messages.length === 0 && !isStreaming && (
-        <Surface className="p-6 sm:p-8 space-y-6">
-          <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200/60 dark:border-blue-500/20">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Multi-Agent LangGraph Architecture</span>
-            </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-display">
-              Ask any business inquiry in natural language
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-sans">
-              IntelliBI autonomously orchestrates 7 specialized agents: Query Analyzer → Schema Intelligence → SQL Generator → AST Security Validator → PostgreSQL Executor → Statistical Analysis → Visualization Selection.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider">
-              Suggested Business Inquiries
-            </span>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {SUGGESTED_QUESTIONS.map((item) => (
-                <button
-                  key={item.q}
-                  type="button"
-                  onClick={() => runQuestion(item.q, messages)}
-                  className="p-3 text-left rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.02] hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:bg-white dark:hover:bg-white/[0.05] transition-all cursor-pointer group"
-                >
-                  <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold block mb-1">
-                    {item.label}
-                  </span>
-                  <span className="text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-snug">
-                    {item.q}
-                  </span>
-                </button>
+                          <div className="space-y-3">
+                            <span className="text-xs text-[#737373] dark:text-[#85858b] block">
+                              Suggested inquiries
+                            </span>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {SUGGESTED_QUESTIONS.map((item) => (
+                                  <button
+                                    key={item.q}
+                                    type="button"
+                                    onClick={() => runQuestion(item.q, messages)}
+                                    className="p-4 text-left rounded-lg border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] bg-[#fafafa] dark:bg-[#141415] hover:border-[#171717]/[0.18] dark:hover:border-[#ededed]/[0.18] transition-colors duration-150 cursor-pointer group"
+                                  >
+                                      <span className="text-xs font-mono text-[#2563eb] dark:text-[#3b82f6] block mb-1">
+                                        {item.label}
+                                      </span>
+                                        <span className="text-xs text-[#171717] dark:text-[#ededed] leading-snug block">
+                                          {item.q}
+                                        </span>
+                                      </button>
               ))}
-            </div>
-          </div>
+                                    </div>
+                                  </div>
         </Surface>
       )}
 
-      {/* Analysis Thread */}
-      <div className="flex-1 space-y-6">
-        {messages.map((item, idx) => (
-          <div key={`${item.queryId}-${idx}`} className="space-y-3.5">
-            {/* User Question Header */}
-            <div className="flex items-center justify-between gap-4 px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white font-display">
-                  {item.question}
-                </h2>
-              </div>
-              <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 whitespace-nowrap shrink-0">
-                Query #{item.queryId}
-              </span>
-            </div>
+                              {/* Analysis Thread */}
+                              <div className="flex-1 space-y-6">
+                                {messages.map((item, idx) => (
+                                    <div key={`${item.queryId}-${idx}`} className="space-y-3">
+                                      <div className="flex items-center justify-between gap-4 px-1">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              <span className="w-2 h-2 rounded-full bg-[#2563eb] dark:bg-[#3b82f6] shrink-0" />
+                                              <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed] truncate">
+                                                {item.question}
+                                              </h2>
+                                            </div>
+                                              <span className="text-xs font-mono tabular-nums text-[#737373] dark:text-[#85858b] whitespace-nowrap shrink-0">
+                                                Query #{item.queryId}
+                                              </span>
+                                            </div>
 
-            <Surface className="p-5 sm:p-6 space-y-5">
-              {/* Security Blocked Banner */}
-              {item.executionStatus === 'blocked' && (
-                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex items-start gap-3">
-                  <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 text-xs">
-                    <p className="font-semibold text-amber-900 dark:text-amber-200 font-display">
-                      Blocked by Read-Only AST Security Guard
-                    </p>
-                    <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed font-sans">
-                      {item.answer}
-                    </p>
-                  </div>
-                </div>
+                                              <Surface className="p-6 space-y-5">
+                                                {/* Security Blocked Banner */}
+                                                {item.executionStatus === 'blocked' && (
+                                                        <div className="p-4 rounded-lg bg-[#fffbeb] dark:bg-[#d97706]/10 border border-[#d97706]/25 flex items-start gap-3">
+                                                          <ShieldAlert
+                                                            className="w-4 h-4 text-[#b45309] dark:text-[#fbbf24] shrink-0 mt-0.5"
+                                                            strokeWidth={1.5}
+                                                          />
+                                                          <div className="space-y-1 text-xs">
+                                                            <p className="font-medium text-[#171717] dark:text-[#ededed]">
+                                                              Blocked by read-only AST guard
+                                                            </p>
+                                                              <p className="text-[#525252] dark:text-[#a1a1a6] leading-relaxed">
+                                                                {item.answer}
+                                                              </p>
+                                                          </div>
+                                                        </div>
               )}
 
-              {/* Failure Banner */}
-              {item.executionStatus === 'failed' && (
-                <div className="space-y-3">
-                  <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex items-start gap-3">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                    <div className="space-y-0.5 text-xs">
-                      <p className="font-semibold text-rose-900 dark:text-rose-200 font-display">
-                        Execution Unsuccessful
-                      </p>
-                      <p className="text-rose-800 dark:text-rose-300/90 leading-relaxed font-sans">
-                        {item.answer}
-                      </p>
-                    </div>
-                  </div>
-                  {item.recommendations && item.recommendations.length > 0 && (
-                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-display">
-                        <Target className="w-3.5 h-3.5" />
-                        <span>Suggested Next Steps</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
-                        {item.recommendations.map((rec, i) => (
-                          <li key={i} className="leading-relaxed">
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                                                        {/* Failure Banner */}
+                                                        {item.executionStatus === 'failed' && (
+                                                          <div className="space-y-3">
+                                                                  <div className="p-4 rounded-lg bg-[#fef2f2] dark:bg-[#e5484d]/10 border border-[#dc2626]/20 dark:border-[#e5484d]/25 flex items-start gap-3">
+                                                                    <AlertTriangle
+                                                                      className="w-4 h-4 text-[#dc2626] dark:text-[#e5484d] shrink-0 mt-0.5"
+                                                                      strokeWidth={1.5}
+                                                                    />
+                                                                    <div className="space-y-1 text-xs">
+                                                                      <p className="font-medium text-[#171717] dark:text-[#ededed]">
+                                                                        Execution unsuccessful
+                                                                      </p>
+                                                                        <p className="text-[#525252] dark:text-[#a1a1a6] leading-relaxed">
+                                                                          {item.answer}
+                                                                        </p>
+                                                                    </div>
+                                                                  </div>
+                                                                  {item.recommendations && item.recommendations.length > 0 && (
+                                                                        <div className="p-4 rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] space-y-2">
+                                                                          <div className="flex items-center gap-2 text-xs font-medium text-[#171717] dark:text-[#ededed]">
+                                                                            <Target className="w-4 h-4 text-[#737373] dark:text-[#85858b]" strokeWidth={1.5} />
+                                                                            <span>Suggested next steps</span>
+                                                                          </div>
+                                                                            <ul className="space-y-1 text-xs text-[#525252] dark:text-[#a1a1a6] list-disc pl-4">
+                                                                              {item.recommendations.map((rec, i) => (
+                                                                                <li key={i} className="leading-relaxed">
+                                                                                  {rec}
+                                                                                </li>
+                                                                              ))}
+                                                                            </ul>
+                                                                        </div>
                   )}
-                </div>
+                                                                      </div>
               )}
 
-              {/* Standard Executive Answer */}
-              {(item.executionStatus === 'succeeded' || item.executionStatus === 'clarification') && (
-                <div className="space-y-4">
-                  <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
-                    {item.answer}
-                  </p>
+                                                                      {/* Standard Executive Answer */}
+                                                                      {(item.executionStatus === 'succeeded' || item.executionStatus === 'clarification') && (
+                                                                        <div className="space-y-4">
+                                                                            <p className="text-sm text-[#171717] dark:text-[#ededed] leading-relaxed">
+                                                                              {item.answer}
+                                                                            </p>
 
-                  {((item.insights && item.insights.length > 0) ||
-                    (item.recommendations && item.recommendations.length > 0)) && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-                      {item.insights && item.insights.length > 0 && (
-                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 font-display">
-                            <Lightbulb className="w-3.5 h-3.5" />
-                            <span>Key Findings</span>
-                          </div>
-                          <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
-                            {item.insights.map((ins, i) => (
-                              <li key={i} className="leading-relaxed">
-                                {ins}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                                                                            {((item.insights && item.insights.length > 0) ||
+                                                                              (item.recommendations && item.recommendations.length > 0)) && (
+                                                                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                                    {item.insights && item.insights.length > 0 && (
+                                                                                          <div className="p-4 rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] space-y-2">
+                                                                                            <div className="flex items-center gap-2 text-xs font-medium text-[#171717] dark:text-[#ededed]">
+                                                                                              <Lightbulb className="w-4 h-4 text-[#2563eb] dark:text-[#3b82f6]" strokeWidth={1.5} />
+                                                                                              <span>Key findings</span>
+                                                                                            </div>
+                                                                                              <ul className="space-y-1.5 text-xs text-[#525252] dark:text-[#a1a1a6] list-disc pl-4">
+                                                                                                {item.insights.map((ins, i) => (
+                                                                                                  <li key={i} className="leading-relaxed">
+                                                                                                    {ins}
+                                                                                                  </li>
+                                                                                                ))}
+                                                                                              </ul>
+                                                                                          </div>
                       )}
 
-                      {item.recommendations && item.recommendations.length > 0 && (
-                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.05] space-y-2">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-display">
-                            <Target className="w-3.5 h-3.5" />
-                            <span>Recommendations</span>
-                          </div>
-                          <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pl-4 font-sans">
-                            {item.recommendations.map((rec, i) => (
-                              <li key={i} className="leading-relaxed">
-                                {rec}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                                                                                          {item.recommendations && item.recommendations.length > 0 && (
+                                                                                                <div className="p-4 rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] space-y-2">
+                                                                                                  <div className="flex items-center gap-2 text-xs font-medium text-[#171717] dark:text-[#ededed]">
+                                                                                                    <Target className="w-4 h-4 text-[#16a34a] dark:text-[#4cc38a]" strokeWidth={1.5} />
+                                                                                                    <span>Recommendations</span>
+                                                                                                  </div>
+                                                                                                    <ul className="space-y-1.5 text-xs text-[#525252] dark:text-[#a1a1a6] list-disc pl-4">
+                                                                                                      {item.recommendations.map((rec, i) => (
+                                                                                                        <li key={i} className="leading-relaxed">
+                                                                                                          {rec}
+                                                                                                        </li>
+                                                                                                      ))}
+                                                                                                    </ul>
+                                                                                                </div>
                       )}
-                    </div>
+                                                                                              </div>
                   )}
-                </div>
-              )}
+                                                                                            </div>
+                                                                                          )}
 
-              {/* Interactive Visualization */}
-              {item.executionStatus === 'succeeded' && item.visualization && item.rows && item.rows.length > 0 && (
-                <div className="pt-2">
-                  <DynamicChart
-                    config={item.visualization}
-                    columns={item.columns ?? []}
-                    rows={item.rows ?? []}
-                  />
-                </div>
-              )}
+                                                                                          {/* Interactive Visualization */}
+                                                                                          {item.executionStatus === 'succeeded' && item.visualization && item.rows && item.rows.length > 0 && (
+                                                                                            <div className="pt-2">
+                                                                                              <DynamicChart
+                                                                                                config={item.visualization}
+                                                                                                columns={item.columns ?? []}
+                                                                                                rows={item.rows ?? []}
+                                                                                              />
+                                                                                            </div>
+                                                                                          )}
 
-              {/* SQL Viewer */}
-              {item.generatedSql && (
-                <SqlViewer
-                  sql={item.generatedSql}
-                  explanation={item.sqlExplanation}
-                  validation={item.validation}
-                  executionTimeMs={item.executionTimeMs}
-                  rowCount={item.rowCount}
-                  retryCount={item.retryCount}
-                />
-              )}
+                                                                                          {/* SQL Viewer */}
+                                                                                          {item.generatedSql && (
+                                                                                            <SqlViewer
+                                                                                              sql={item.generatedSql}
+                                                                                              explanation={item.sqlExplanation}
+                                                                                              validation={item.validation}
+                                                                                              executionTimeMs={item.executionTimeMs}
+                                                                                              rowCount={item.rowCount}
+                                                                                              retryCount={item.retryCount}
+                                                                                            />
+                                                                                          )}
 
-              {/* Multi-Agent Pipeline Trace */}
-              {item.pipelineTrace && item.pipelineTrace.length > 0 && (
-                <AgentPipelineTrace steps={item.pipelineTrace} />
-              )}
+                                                                                          {/* Multi-Agent Pipeline Trace */}
+                                                                                          {item.pipelineTrace && item.pipelineTrace.length > 0 && (
+                                                                                            <AgentPipelineTrace steps={item.pipelineTrace} />
+                                                                                          )}
 
-              {/* Actions Footer */}
-              <div className="pt-2.5 border-t border-slate-100 dark:border-white/[0.05] flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  {item.executionStatus === 'succeeded' && (
-                    <>
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        onClick={() => handleSaveReport(item)}
-                        disabled={savingReportId === item.queryId || savedReportIds[item.queryId]}
-                      >
-                        {savedReportIds[item.queryId] ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            <span>Saved to Reports</span>
-                          </>
-                        ) : (
-                          <>
-                            <BookmarkPlus className="w-3 h-3" />
-                            <span>{savingReportId === item.queryId ? 'Saving...' : 'Save Report'}</span>
-                          </>
-                        )}
-                      </Button>
+                                                                                          {/* Actions Footer */}
+                                                                                            <div className="pt-3 border-t border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] flex flex-wrap items-center justify-between gap-3">
+                                                                                              <div className="flex flex-wrap items-center gap-2">
+                                                                                                {item.executionStatus === 'succeeded' && (
+                                                                                                  <>
+                                                                                                    <Button
+                                                                                                      size="xs"
+                                                                                                      variant="secondary"
+                                                                                                      onClick={() => handleSaveReport(item)}
+                                                                                                      disabled={savingReportId === item.queryId || savedReportIds[item.queryId]}
+                                                                                                    >
+                                                                                                      {savedReportIds[item.queryId] ? (
+                                                                                                        <>
+                                                                                                          <Check className="w-4 h-4 text-[#16a34a] dark:text-[#4cc38a]" strokeWidth={1.5} />
+                                                                                                          <span>Saved</span>
+                                                                                                        </>
+                                                                                                      ) : (
+                                                                                                        <>
+                                                                                                          <BookmarkPlus className="w-4 h-4" strokeWidth={1.5} />
+                                                                                                          <span>{savingReportId === item.queryId ? 'Saving...' : 'Save report'}</span>
+                                                                                                        </>
+                                                                                                      )}
+                                                                                                    </Button>
 
-                      {item.rows && item.rows.length > 0 && (
-                        <Button
-                          size="xs"
-                          variant="secondary"
-                          onClick={() =>
-                            downloadCsvFile(
-                              `intellibi-query-${item.queryId}.csv`,
-                              item.columns ?? [],
-                              item.rows ?? []
-                            )
-                          }
-                        >
-                          <Download className="w-3 h-3" />
-                          <span>CSV</span>
-                        </Button>
-                      )}
+                                                                                                    {item.rows && item.rows.length > 0 && (
+                                                                                                      <Button
+                                                                                                        size="xs"
+                                                                                                        variant="secondary"
+                                                                                                        onClick={() =>
+                                                                                                          downloadCsvFile(
+                                                                                                            `intellibi-query-${item.queryId}.csv`,
+                                                                                                            item.columns ?? [],
+                                                                                                            item.rows ?? []
+                                                                                                          )
+                                                                                                        }
+                                                                                                      >
+                                                                                                        <Download className="w-4 h-4" strokeWidth={1.5} />
+                                                                                                        <span>CSV</span>
+                                                                                                      </Button>
+                                                                                                    )}
 
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        onClick={() =>
-                          exportReportToPdf({
-                            title: item.visualization?.title || item.question,
-                            question: item.question,
-                            summary: item.answer,
-                            insights: item.insights ?? [],
-                            generatedSql: item.generatedSql,
-                            columns: item.columns ?? [],
-                            rows: item.rows ?? [],
-                            createdAt: item.createdAt,
-                          })
-                        }
-                      >
-                        <FileDown className="w-3 h-3" />
-                        <span>PDF Report</span>
-                      </Button>
-                    </>
-                  )}
+                                                                                                    <Button
+                                                                                                      size="xs"
+                                                                                                      variant="secondary"
+                                                                                                      onClick={() =>
+                                                                                                        exportReportToPdf({
+                                                                                                          title: item.visualization?.title || item.question,
+                                                                                                          question: item.question,
+                                                                                                          summary: item.answer,
+                                                                                                          insights: item.insights ?? [],
+                                                                                                          generatedSql: item.generatedSql,
+                                                                                                          columns: item.columns ?? [],
+                                                                                                          rows: item.rows ?? [],
+                                                                                                          createdAt: item.createdAt,
+                                                                                                        })
+                                                                                                      }
+                                                                                                    >
+                                                                                                      <FileDown className="w-4 h-4" strokeWidth={1.5} />
+                                                                                                      <span>PDF</span>
+                                                                                                    </Button>
+                                                                                                  </>
+                                                                                                )}
 
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => runQuestion(item.question, messages.slice(0, idx))}
-                    disabled={isStreaming}
+                                                                                                <Button
+                                                                                                  size="xs"
+                                                                                                  variant="ghost"
+                                                                                                  onClick={() => runQuestion(item.question, messages.slice(0, idx))}
+                                                                                                  disabled={isStreaming}
+                                                                                                >
+                                                                                                  <RefreshCw className="w-4 h-4" strokeWidth={1.5} />
+                                                                                                  <span>Regenerate</span>
+                                                                                                </Button>
+                                                                                              </div>
+
+                                                                                              <div className="flex items-center gap-1">
+                                                                                                <button
+                                                                                                  type="button"
+                                                                                                  onClick={() => handleFeedback(item.queryId, 'helpful')}
+                                                                                                  aria-label={`Mark query ${item.queryId} helpful`}
+                                                                                                          ? 'text-[#16a34a] bg-[#f0fdf4] dark:bg-[#4cc38a]/12 dark:text-[#4cc38a]'
+                                                                                                          : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
+                                                                                                      }`}
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Regenerate</span>
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleFeedback(item.queryId, 'helpful')}
-                    aria-label={`Mark query ${item.queryId} helpful`}
-                    className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                      feedbackMap[item.queryId] === 'helpful'
-                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
-                    }`}
-                  >
-                    <ThumbsUp className="w-3.5 h-3.5" />
+                    <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleFeedback(item.queryId, 'needs_improvement')}
                     aria-label={`Mark query ${item.queryId} needs improvement`}
-                    className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                      feedbackMap[item.queryId] === 'needs_improvement'
-                        ? 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
-                    }`}
+                                                                                                        ? 'text-[#dc2626] bg-[#fef2f2] dark:bg-[#e5484d]/12 dark:text-[#e5484d]'
+                                                                                                        : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed] hover:bg-[#f4f4f5] dark:hover:bg-[#232325]'
+                                                                                                    }`}
                   >
-                    <ThumbsDown className="w-3.5 h-3.5" />
+                    <ThumbsDown className="w-4 h-4" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -548,15 +533,14 @@ export function AnalystPage() {
         {isStreaming && activeQuestion && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white font-display">
+              <Loader2 className="w-4 h-4 text-[#2563eb] dark:text-[#3b82f6] animate-spin shrink-0" strokeWidth={1.5} />
+              <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
                 {activeQuestion}
               </h2>
             </div>
-            <Surface className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300">
-                <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                <span>Executing multi-agent analytics pipeline against PostgreSQL...</span>
+            <Surface className="p-6 space-y-4">
+              <div className="flex items-center gap-2 text-xs text-[#525252] dark:text-[#a1a1a6]">
+                <span>Executing verification pipeline against PostgreSQL...</span>
               </div>
               <AgentPipelineTrace steps={liveSteps} isRunning defaultExpanded />
             </Surface>
@@ -566,9 +550,9 @@ export function AnalystPage() {
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2.5"
+            className="p-4 rounded-lg bg-[#fef2f2] dark:bg-[#e5484d]/10 border border-[#dc2626]/20 dark:border-[#e5484d]/25 text-xs text-[#dc2626] dark:text-[#e5484d] flex items-start gap-2.5"
           >
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.5} />
             <span>{error}</span>
           </div>
         )}
@@ -578,7 +562,7 @@ export function AnalystPage() {
 
       {/* Sticky Query Input Console */}
       <div className="sticky bottom-4 z-20">
-        <Surface className="p-2 sm:p-2.5 shadow-lg border border-slate-200/90 dark:border-white/[0.1] backdrop-blur-lg bg-white/95 dark:bg-[#11141D]/95">
+        <Surface className="p-2 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-none border border-[#171717]/[0.12] dark:border-[#ededed]/[0.12]">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <label htmlFor="analyst-question-input" className="sr-only">
               Ask a natural language question about your PostgreSQL data
@@ -589,14 +573,10 @@ export function AnalystPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isStreaming}
-              placeholder={
-                messages.length > 0
-                  ? 'Ask a follow-up question (context is preserved)...'
-                  : 'Ask a question about revenue, orders, customers, or products...'
-              }
-              className="flex-1 h-9 px-3 text-xs bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
+              placeholder={messages.length > 0 ? 'Ask a follow-up question' : 'Ask a question'}
+              className="flex-1 h-9 px-3 text-sm bg-transparent text-[#171717] dark:text-[#ededed] placeholder:text-[#737373] dark:placeholder:text-[#85858b] focus:outline-none"
             />
-            <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400 px-1">
+            <div className="hidden sm:flex items-center px-1">
               <Keycap>Enter</Keycap>
             </div>
             <Button
@@ -607,13 +587,13 @@ export function AnalystPage() {
             >
               {isStreaming ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Thinking</span>
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                  <span>Running</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Run Query</span>
+                  <Send className="w-4 h-4" strokeWidth={1.5} />
+                  <span>Run query</span>
                 </>
               )}
             </Button>
