@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  variant?: 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger' | 'outline';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
 }
@@ -11,22 +11,24 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'secondary', size = 'md', type = 'button', icon, children, ...props }, ref) => {
     const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
       primary:
-        'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white shadow-xs dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 dark:active:bg-slate-200 border border-blue-600 dark:border-white/90 font-semibold',
+      'bg-[#171717] hover:bg-[#2a2a2c] text-white border border-[#171717] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:bg-[#ededed] dark:text-[#141415] dark:border-[#ededed] dark:hover:bg-white font-medium',
+      accent:
+        'bg-[#2563eb] hover:bg-[#1d4ed8] text-white border border-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:border-[#3b82f6] font-medium',
       secondary:
-        'bg-white text-slate-800 hover:bg-slate-50/80 active:bg-slate-100 border border-slate-200/90 shadow-2xs dark:bg-[#161A26] dark:text-slate-200 dark:border-white/[0.08] dark:hover:bg-[#1C2232] dark:active:bg-[#20273A]',
+      'bg-white text-[#171717] hover:bg-[#f4f4f5] border border-[#171717]/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:bg-[#232325] dark:text-[#ededed] dark:border-[#ededed]/[0.08] dark:hover:bg-[#2c2c2f] dark:shadow-none font-medium',
       outline:
-        'bg-transparent text-slate-700 hover:bg-slate-100/80 border border-slate-300/80 dark:text-slate-300 dark:border-white/[0.12] dark:hover:bg-white/[0.05]',
+      'bg-transparent text-[#525252] hover:text-[#171717] hover:bg-[#f4f4f5] border border-[#171717]/[0.12] dark:text-[#a1a1a6] dark:border-[#ededed]/[0.12] dark:hover:text-[#ededed] dark:hover:bg-[#232325]',
       ghost:
-        'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-white/[0.06]',
+      'bg-transparent text-[#525252] hover:text-[#171717] hover:bg-[#171717]/[0.05] border border-transparent dark:text-[#a1a1a6] dark:hover:text-[#ededed] dark:hover:bg-[#ededed]/[0.06]',
       danger:
-        'bg-rose-600 text-white hover:bg-rose-700 border border-rose-600 shadow-xs dark:bg-rose-500/90 dark:hover:bg-rose-500',
+      'bg-[#dc2626] text-white hover:bg-[#b91c1c] border border-[#dc2626] dark:bg-[#e5484d] dark:hover:bg-[#dc2626]',
     };
 
     const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
       xs: 'h-7 px-2.5 text-xs gap-1.5 rounded-md',
       sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
-      md: 'h-9 px-3.5 text-sm gap-2 rounded-lg',
-      lg: 'h-10 px-4 text-sm gap-2 rounded-xl',
+      md: 'h-9 px-4 text-sm gap-2 rounded-lg',
+      lg: 'h-10 px-4 text-sm gap-2 rounded-lg',
     };
 
     return (
@@ -34,8 +36,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          'inline-flex items-center justify-center font-medium whitespace-nowrap shrink-0 transition-all duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-950',
+          'inline-flex items-center justify-center font-medium whitespace-nowrap shrink-0',
+          'transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb]/50 focus-visible:ring-offset-1 dark:focus-visible:ring-[#3b82f6]/50 dark:focus-visible:ring-offset-[#141415]',
           'disabled:opacity-40 disabled:pointer-events-none cursor-pointer active:scale-[0.98]',
           variants[variant],
           sizes[size],
@@ -64,8 +67,9 @@ export function Surface({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-[#11141D] border border-slate-200/80 dark:border-white/[0.07] rounded-xl shadow-2xs',
-        hover && 'transition-all duration-150 hover:border-slate-300 dark:hover:border-white/[0.12] hover:shadow-xs',
+        'bg-white dark:bg-[#19191b] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none',
+        hover &&
+        'transition-colors duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#171717]/[0.16] dark:hover:border-[#ededed]/[0.16]',
         className
       )}
       {...props}
@@ -88,30 +92,32 @@ export function Badge({
 }) {
   const styles = {
     neutral:
-      'bg-slate-100 text-slate-700 border-slate-200/80 dark:bg-white/[0.05] dark:text-slate-300 dark:border-white/[0.08]',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200/80 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+    'bg-[#f4f4f5] text-[#525252] border-[#171717]/[0.08] dark:bg-[#232325] dark:text-[#a1a1a6] dark:border-[#ededed]/[0.08]',
+    blue:
+      'bg-[#eff6ff] text-[#1d4ed8] border-[#2563eb]/20 dark:bg-[#2563eb]/15 dark:text-[#93c5fd] dark:border-[#3b82f6]/25',
     emerald:
-      'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+    'bg-[#f0fdf4] text-[#15803d] border-[#16a34a]/20 dark:bg-[#4cc38a]/12 dark:text-[#4cc38a] dark:border-[#4cc38a]/25',
     amber:
-      'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
-    rose: 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
+    'bg-[#fffbeb] text-[#b45309] border-[#d97706]/20 dark:bg-[#d97706]/12 dark:text-[#fbbf24] dark:border-[#d97706]/25',
+    rose:
+      'bg-[#fef2f2] text-[#dc2626] border-[#dc2626]/20 dark:bg-[#e5484d]/12 dark:text-[#e5484d] dark:border-[#e5484d]/25',
     purple:
-      'bg-purple-50 text-purple-700 border-purple-200/80 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
+    'bg-[#f4f4f5] text-[#525252] border-[#171717]/[0.08] dark:bg-[#232325] dark:text-[#a1a1a6] dark:border-[#ededed]/[0.08]',
   };
 
   const dotColors = {
-    neutral: 'bg-slate-400 dark:bg-slate-500',
-    blue: 'bg-blue-500 dark:bg-blue-400',
-    emerald: 'bg-emerald-500 dark:bg-emerald-400',
-    amber: 'bg-amber-500 dark:bg-amber-400',
-    rose: 'bg-rose-500 dark:bg-rose-400',
-    purple: 'bg-purple-500 dark:bg-purple-400',
+    neutral: 'bg-[#737373] dark:bg-[#85858b]',
+    blue: 'bg-[#2563eb] dark:bg-[#3b82f6]',
+    emerald: 'bg-[#16a34a] dark:bg-[#4cc38a]',
+    amber: 'bg-[#b45309] dark:bg-[#fbbf24]',
+    rose: 'bg-[#dc2626] dark:bg-[#e5484d]',
+    purple: 'bg-[#737373] dark:bg-[#85858b]',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium border tabular-nums leading-tight shrink-0',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-normal border tabular-nums leading-4 shrink-0',
         styles[variant],
         className
       )}
@@ -126,8 +132,8 @@ export function Keycap({ children, className }: { children: React.ReactNode; cla
   return (
     <kbd
       className={cn(
-        'inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] font-mono font-medium rounded-md border',
-        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1A1F2C] dark:text-slate-400 dark:border-white/[0.1] shadow-2xs',
+        'inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-mono font-normal rounded border leading-none',
+        'bg-[#f4f4f5] text-[#525252] border-[#171717]/[0.1] dark:bg-[#232325] dark:text-[#a1a1a6] dark:border-[#ededed]/[0.12]',
         className
       )}
     >
@@ -140,7 +146,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-lg bg-slate-200/80 dark:bg-white/[0.06]',
+        'animate-pulse rounded-lg bg-[#171717]/[0.06] dark:bg-[#ededed]/[0.06]',
         className
       )}
     />

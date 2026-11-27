@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowRight, Lock, Mail, Sparkles, User } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Terminal, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Surface } from '../ui/Primitives';
+import { BrandMark } from '../layout/AppShell';
 
 export function AuthScreen() {
   const { login, register, loginDemo } = useAuth();
@@ -24,7 +25,7 @@ export function AuthScreen() {
       }
     } catch (err: unknown) {
       const axiosMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(axiosMsg || 'Authentication failed. Please check your credentials.');
+      setError(axiosMsg || 'Authentication failed. Check your credentials and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -43,45 +44,38 @@ export function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#090A0F] p-4 relative overflow-hidden">
-      {/* Subtle ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="min-h-screen flex items-center justify-center bg-[#fafafa] dark:bg-[#141415] p-6">
+              <div className="w-full max-w-sm space-y-6">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex justify-center">
+                    <BrandMark />
+                  </div>
+                    <h1 className="text-2xl font-medium text-[#171717] dark:text-[#ededed]">IntelliBI</h1>
+                    <p className="text-sm text-[#525252] dark:text-[#a1a1a6]">
+                      PostgreSQL analytics workstation
+                    </p>
+                </div>
 
-      <div className="w-full max-w-sm space-y-5 relative z-10">
-        <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm font-display shadow-sm shadow-blue-500/20">
-            IB
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
-            IntelliBI
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
-            Autonomous AI Business Intelligence for PostgreSQL
-          </p>
-        </div>
-
-        <Surface className="p-6 space-y-4.5 backdrop-blur-md">
-          {/* Segmented Mode Selector */}
-          <div
-            className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.08]"
-            role="tablist"
-            aria-label="Authentication mode"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'login'}
-              onClick={() => {
-                setMode('login');
-                setError(null);
-              }}
-              className={`py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                mode === 'login'
-                  ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                  <Surface className="p-6 space-y-5">
+                    {/* Segmented Mode Selector */}
+                    <div
+                      className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-[#f4f4f5] dark:bg-[#232325] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]"
+                      role="tablist"
+                      aria-label="Authentication mode"
+                    >
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={mode === 'login'}
+                        onClick={() => {
+                          setMode('login');
+                          setError(null);
+                        }}
+                                ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                                : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                            }`}
             >
-              Sign In
+              Sign in
             </button>
             <button
               type="button"
@@ -91,108 +85,125 @@ export function AuthScreen() {
                 setMode('register');
                 setError(null);
               }}
-              className={`py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                mode === 'register'
-                  ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                        className = {`h-8 text-xs font-medium rounded-md transition-colors duration-150 cursor-pointer ${mode === 'register'
+                              ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                              : 'text-[#737373] dark:text-[#85858b] hover:text-[#171717] dark:hover:text-[#ededed]'
+                          }`}
             >
-              Create Account
-            </button>
-          </div>
+                      Create account
+                    </button>
+                  </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {mode === 'register' && (
-              <div className="space-y-1">
-                <label htmlFor="auth-name" className="block text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth-name"
-                    type="text"
-                    required
-                    minLength={2}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Jordan Patel"
-                    className="w-full h-8.5 pl-8.5 pr-3 text-xs rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                  />
-                </div>
-              </div>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      {mode === 'register' && (
+                            <div className="space-y-1.5">
+                              <label
+                                htmlFor="auth-name"
+                                className="block text-xs font-medium text-[#525252] dark:text-[#a1a1a6]"
+                              >
+                                Full name
+                              </label>
+                              <div className="relative">
+                                <User
+                                  className="w-4 h-4 text-[#737373] dark:text-[#85858b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                  strokeWidth={1.5}
+                                />
+                                <input
+                                  id="auth-name"
+                                  type="text"
+                                  required
+                                  minLength={2}
+                                  value={name}
+                                  onChange={(e) => setName(e.target.value)}
+                                  placeholder="Jordan Patel"
+                                  className="w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.1] dark:border-[#ededed]/[0.1] text-[#171717] dark:text-[#ededed] placeholder:text-[#737373] dark:placeholder:text-[#85858b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40 dark:focus:ring-[#3b82f6]/40 transition-colors duration-150"
+                                />
+                              </div>
+                            </div>
             )}
 
-            <div className="space-y-1">
-              <label htmlFor="auth-email" className="block text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                Work Email
-              </label>
-              <div className="relative">
-                <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  id="auth-email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@intellibi.ai"
-                  className="w-full h-8.5 pl-8.5 pr-3 text-xs rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
-                />
-              </div>
-            </div>
+                                <div className="space-y-1.5">
+                                  <label
+                                    htmlFor="auth-email"
+                                    className="block text-xs font-medium text-[#525252] dark:text-[#a1a1a6]"
+                                  >
+                                    Work email
+                                  </label>
+                                  <div className="relative">
+                                    <Mail
+                                      className="w-4 h-4 text-[#737373] dark:text-[#85858b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                      strokeWidth={1.5}
+                                    />
+                                    <input
+                                      id="auth-email"
+                                      type="email"
+                                      required
+                                      value={email}
+                                      onChange={(e) => setEmail(e.target.value)}
+                                      placeholder="demo@intellibi.ai"
+                                      className="w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.1] dark:border-[#ededed]/[0.1] text-[#171717] dark:text-[#ededed] placeholder:text-[#737373] dark:placeholder:text-[#85858b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40 dark:focus:ring-[#3b82f6]/40 transition-colors duration-150 font-mono"
+                                    />
+                                  </div>
+                                </div>
 
-            <div className="space-y-1">
-              <label htmlFor="auth-password" className="block text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  id="auth-password"
-                  type="password"
-                  required
-                  minLength={mode === 'register' ? 8 : 1}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'}
-                  className="w-full h-8.5 pl-8.5 pr-3 text-xs rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                />
-              </div>
-            </div>
+                                    <div className="space-y-1.5">
+                                      <label
+                                        htmlFor="auth-password"
+                                        className="block text-xs font-medium text-[#525252] dark:text-[#a1a1a6]"
+                                      >
+                                        Password
+                                      </label>
+                                      <div className="relative">
+                                        <Lock
+                                          className="w-4 h-4 text-[#737373] dark:text-[#85858b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                          strokeWidth={1.5}
+                                        />
+                                        <input
+                                          id="auth-password"
+                                          type="password"
+                                          required
+                                          minLength={mode === 'register' ? 8 : 1}
+                                          value={password}
+                                          onChange={(e) => setPassword(e.target.value)}
+                                          placeholder={mode === 'register' ? 'Minimum 8 characters' : 'Password'}
+                                          className="w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-[#fafafa] dark:bg-[#141415] border border-[#171717]/[0.1] dark:border-[#ededed]/[0.1] text-[#171717] dark:text-[#ededed] placeholder:text-[#737373] dark:placeholder:text-[#85858b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40 dark:focus:ring-[#3b82f6]/40 transition-colors duration-150"
+                                        />
+                                      </div>
+                                    </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 text-[11px] text-rose-700 dark:text-rose-300"
-              >
-                {error}
-              </div>
-            )}
+                                    {error && (
+                                      <div
+                                        role="alert"
+                                        className="p-3 rounded-lg bg-[#fef2f2] dark:bg-[#e5484d]/10 border border-[#dc2626]/20 dark:border-[#e5484d]/25 text-xs text-[#dc2626] dark:text-[#e5484d]"
+                                      >
+                                        {error}
+                                      </div>
+                                    )}
 
-            <Button type="submit" variant="primary" size="md" className="w-full" disabled={submitting}>
-              <span>{submitting ? 'Authenticating...' : mode === 'login' ? 'Sign In' : 'Create Account'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </form>
+                                    <Button type="submit" variant="primary" size="md" className="w-full" disabled={submitting}>
+                                      <span>{submitting ? 'Authenticating...' : mode === 'login' ? 'Sign in' : 'Create account'}</span>
+                                      <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                                    </Button>
+                                  </form>
 
-          <div className="pt-3.5 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="w-full font-medium"
-              onClick={handleDemo}
-              disabled={submitting}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Launch Demo Workspace</span>
-            </Button>
-            <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 font-mono">
-              demo@intellibi.ai · DemoPass123!
-            </p>
-          </div>
-        </Surface>
-      </div>
-    </div>
-  );
+                                    <div className="pt-4 border-t border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] space-y-2">
+                                      <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={handleDemo}
+                                        disabled={submitting}
+                                      >
+                                        <Terminal className="w-4 h-4 text-[#737373] dark:text-[#85858b]" strokeWidth={1.5} />
+                                        <span>Open demo workspace</span>
+                                      </Button>
+                                        <p className="text-[11px] text-center text-[#737373] dark:text-[#85858b] font-mono">
+                                          demo@intellibi.ai · DemoPass123!
+                                        </p>
+                                    </div>
+                                  </Surface>
+                                </div>
+                            </div>
+                            );
 }
