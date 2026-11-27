@@ -3,25 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Bot,
-  DollarSign,
-  Package,
-  ShoppingBag,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Bot, TrendingDown, TrendingUp } from 'lucide-react';
 import { dashboardApi } from '../services/api';
 import type {
   DashboardKpis,
@@ -73,13 +61,13 @@ export function OverviewPage() {
       .then(([overviewRes, revRes, prodRes, regRes]) => {
         if (!active) return;
         setKpis(overviewRes.kpis);
-        setRecentQueries(overviewRes.recentQueries);
-        setRevenueSeries(revRes.series);
-        setTopProducts(prodRes.products);
-        setRegions(regRes.regions);
+        setRecentQueries(overviewRes.recentQueries ?? []);
+        setRevenueSeries(revRes.series ?? []);
+        setTopProducts(prodRes.products ?? []);
+        setRegions(regRes.regions ?? []);
       })
       .catch(() => {
-        if (active) setError('Unable to load live PostgreSQL dashboard analytics.');
+        if (active) setError('Unable to load PostgreSQL dashboard metrics.');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -92,35 +80,31 @@ export function OverviewPage() {
 
   const kpiCards = kpis
     ? [
-        {
-          label: 'Total Revenue',
-          value: formatCurrency(kpis.totalRevenue),
-          delta: kpis.revenueGrowthPct,
-          meta: 'vs prior year period',
-          icon: DollarSign,
-        },
-        {
-          label: 'Total Orders',
-          value: formatNumber(kpis.totalOrders),
-          delta: kpis.ordersGrowthPct,
-          meta: 'Completed fulfillment',
-          icon: ShoppingBag,
-        },
-        {
-          label: 'Total Customers',
-          value: formatNumber(kpis.totalCustomers),
-          delta: null,
-          meta: `${kpis.activeBuyers} active buyers · ${kpis.newCustomers2026} new`,
-          icon: Users,
-        },
-        {
-          label: 'Average Order Value',
-          value: formatCurrency(kpis.avgOrderValue),
-          delta: kpis.aovGrowthPct,
-          meta: 'Net revenue per order',
-          icon: Package,
-        },
-      ]
+      {
+        label: 'Total revenue',
+        value: formatCurrency(kpis.totalRevenue),
+        delta: kpis.revenueGrowthPct,
+        meta: 'vs prior year',
+      },
+      {
+        label: 'Total orders',
+        value: formatNumber(kpis.totalOrders),
+        delta: kpis.ordersGrowthPct,
+        meta: 'vs prior year',
+      },
+      {
+        label: 'Active customers',
+        value: formatNumber(kpis.totalCustomers),
+        delta: null,
+        meta: `${kpis.activeBuyers} buyers · ${kpis.newCustomers2026} new in 2026`,
+      },
+      {
+        label: 'Average order value',
+        value: formatCurrency(kpis.avgOrderValue),
+        delta: kpis.aovGrowthPct,
+        meta: 'vs prior year',
+      },
+    ]
     : [];
 
   const totalRegionalRev =
@@ -129,43 +113,40 @@ export function OverviewPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
-            Executive Overview
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time business performance calculated directly from PostgreSQL
-          </p>
-        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]">
+          <div>
+              <h1 className="text-2xl sm:text-3xl font-medium text-[#171717] dark:text-[#ededed]">
+                Executive overview
+              </h1>
+                <p className="text-sm text-[#737373] dark:text-[#85858b] mt-1">
+                  Business performance calculated directly from PostgreSQL
+                </p>
+              </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Segmented Timeframe Switcher */}
-          <div
-            className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.08]"
-            role="tablist"
-            aria-label="Overview timeframe filter"
-          >
-            {(['all', '2026', '2025'] as const).map((yr) => (
-              <button
-                key={yr}
-                type="button"
-                role="tab"
-                aria-selected={yearFilter === yr}
-                onClick={() => setYearFilter(yr)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                  yearFilter === yr
-                    ? 'bg-white dark:bg-[#1C212E] text-slate-950 dark:text-white shadow-2xs font-semibold'
-                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    className="inline-flex items-center p-1 rounded-lg bg-[#f4f4f5] dark:bg-[#232325] border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08]"
+                    role="tablist"
+                    aria-label="Overview timeframe filter"
+                  >
+                    {(['all', '2026', '2025'] as const).map((yr) => (
+                      <button
+                        key={yr}
+                        type="button"
+                        role="tab"
+                        aria-selected={yearFilter === yr}
+                        onClick={() => setYearFilter(yr)}
+                                ? 'bg-white dark:bg-[#19191b] text-[#171717] dark:text-[#ededed] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none'
+                                : 'text-[#737373] hover:text-[#171717] dark:text-[#85858b] dark:hover:text-[#ededed]'
+                            }`}
               >
-                {yr === 'all' ? 'All Time' : yr}
+                {yr === 'all' ? 'All time' : yr}
               </button>
             ))}
           </div>
 
           <Button variant="primary" size="sm" onClick={() => navigate('/analyst')}>
-            <Bot className="w-3.5 h-3.5" />
+            <Bot className="w-4 h-4" strokeWidth={1.5} />
             <span>Ask AI Analyst</span>
           </Button>
         </div>
@@ -174,120 +155,120 @@ export function OverviewPage() {
       {error && (
         <div
           role="alert"
-          className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300"
+          className="p-4 rounded-xl bg-[#fef2f2] dark:bg-[#e5484d]/10 border border-[#dc2626]/20 dark:border-[#e5484d]/25 text-xs text-[#dc2626] dark:text-[#e5484d]"
         >
           {error}
         </div>
       )}
 
-      {/* 4-Column KPI Cards */}
-      <section aria-label="Key performance indicators" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+      {/* 4-Column Stat Cards — clean numbers, labels, and explicit comparison context */}
+      <section aria-label="Key performance indicators" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Surface key={i} className="p-4.5 space-y-3">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-7 w-28" />
-                <Skeleton className="h-2.5 w-36" />
+              <Surface key={i} className="p-5 space-y-3">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-7 w-32" />
+                <Skeleton className="h-3 w-28" />
               </Surface>
             ))
-          : kpiCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <Surface key={card.label} hover className="p-4.5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {card.label}
-                      </span>
-                      <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.05] flex items-center justify-center text-slate-500 dark:text-slate-400">
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-
-                    <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-                      {card.value}
-                    </div>
+          : kpiCards.map((card) => (
+              <Surface key={card.label} className="p-5 flex flex-col justify-between gap-4">
+                <div className="space-y-2">
+                  <span className="text-xs text-[#737373] dark:text-[#85858b] block">
+                    {card.label}
+                  </span>
+                  <div className="text-2xl sm:text-[28px] leading-none font-medium font-mono tabular-nums text-[#171717] dark:text-[#ededed]">
+                    {card.value}
                   </div>
+                </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.05] flex items-center justify-between gap-2 text-[11px]">
-                    <span className="text-slate-400 dark:text-slate-500 truncate">{card.meta}</span>
-                    {card.delta !== null && (
+                <div className="flex items-center gap-2 text-xs">
+                  {card.delta !== null ? (
+                    <>
                       <span
-                        className={`inline-flex items-center gap-1 font-mono tabular-nums font-semibold shrink-0 ${
-                          card.delta >= 0
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-rose-600 dark:text-rose-400'
-                        }`}
+                        className = {`inline-flex items-center gap-1 font-mono tabular-nums font-medium ${card.delta >= 0
+                              ? 'text-[#16a34a] dark:text-[#4cc38a]'
+                              : 'text-[#dc2626] dark:text-[#e5484d]'
+                          }`}
                       >
                         {card.delta >= 0 ? (
-                          <TrendingUp className="w-3 h-3" />
+                          <TrendingUp className="w-3.5 h-3.5" strokeWidth={1.5} />
                         ) : (
-                          <TrendingDown className="w-3 h-3" />
+                          <TrendingDown className="w-3.5 h-3.5" strokeWidth={1.5} />
                         )}
                         {formatPercent(card.delta)}
                       </span>
-                    )}
-                  </div>
-                </Surface>
-              );
-            })}
+                <span className="text-[#737373] dark:text-[#85858b]">{card.meta}</span>
+              </>
+              ) : (
+              <span className="text-[#737373] dark:text-[#85858b] font-mono tabular-nums">
+                {card.meta}
+              </span>
+                  )}
+          </div>
+        </Surface>
+            ))}
       </section>
 
-      {/* Primary Charts Strip: Revenue Trend + Monthly Order Volume */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <Surface className="xl:col-span-7 p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-                Revenue Trajectory
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Monthly realized gross revenue excluding cancellations
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/analyst?q=${encodeURIComponent('Show monthly revenue trends for the previous year.')}`
-                )
-              }
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <span>Analyze in AI</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </button>
-          </div>
+            {/* Primary Visual Band: Dominant Revenue Chart + Narrower Regional Ranked List */}
+            <section className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
+              <Surface className="xl:col-span-8 p-6 flex flex-col justify-between">
+                <div className="flex items-start justify-between gap-4 mb-5">
+                  <div>
+                      <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+                        Revenue trajectory
+                      </h2>
+                        <p className="text-xs text-[#737373] dark:text-[#85858b] mt-0.5">
+                          Monthly realized revenue excluding cancelled orders
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/analyst?q=${encodeURIComponent('Show monthly revenue trends for the previous year.')}`
+                          )
+                        }
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#2563eb] dark:text-[#3b82f6] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        <span>Inspect in Analyst</span>
+                        <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+                  </div>
 
-          {loading ? (
-            <Skeleton className="h-[260px] w-full" />
-          ) : (
-            <div className="h-[260px] w-full">
+                  {loading ? (
+            <Skeleton className="h-80 w-full" />
+                  ) : revenueSeries.length === 0 ? (
+                    <div className="h-80 w-full flex items-center justify-center text-xs text-[#737373] dark:text-[#85858b]">
+                      No revenue records for selected period
+                    </div>
+                  ) : (
+            <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: -15, bottom: 0 }}>
+                <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                   <defs>
                     <linearGradient id="overviewRevGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="currentColor"
-                    className="text-slate-200/80 dark:text-white/[0.06]"
+                    className="text-[#171717]/[0.08] dark:text-[#ededed]/[0.08]"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-slate-400 dark:text-slate-500 font-mono"
+                    tick={{ fontSize: 11, fill: 'currentColor' }}
+                    className="text-[#737373] dark:text-[#85858b] font-mono"
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(v) => formatCurrency(Number(v), true)}
-                    tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-slate-400 dark:text-slate-500 font-mono"
+                    tick={{ fontSize: 11, fill: 'currentColor' }}
+                    className="text-[#737373] dark:text-[#85858b] font-mono"
                     axisLine={false}
                     tickLine={false}
                     width={56}
@@ -295,17 +276,17 @@ export function OverviewPage() {
                   <Tooltip
                     formatter={(val) => [formatCurrency(Number(val)), 'Revenue']}
                     contentStyle={{
-                      backgroundColor: 'rgba(15, 20, 30, 0.95)',
-                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      backgroundColor: '#19191b',
+                      borderColor: 'rgba(237, 237, 237, 0.12)',
                       borderRadius: '8px',
-                      color: '#fff',
+                      color: '#ededed',
                       fontSize: '12px',
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#3B82F6"
+                    stroke="#2563eb"
                     strokeWidth={2}
                     fill="url(#overviewRevGrad)"
                   />
@@ -315,84 +296,88 @@ export function OverviewPage() {
           )}
         </Surface>
 
-        <Surface className="xl:col-span-5 p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-                Monthly Orders
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Completed volume per calendar period
-              </p>
-            </div>
+        <Surface className="xl:col-span-4 p-6">
+          <div className="mb-5">
+            <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+              Regional revenue
+            </h2>
+            <p className="text-xs text-[#737373] dark:text-[#85858b] mt-0.5">
+              Share and average order value by territory
+            </p>
           </div>
 
           {loading ? (
-            <Skeleton className="h-[260px] w-full" />
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : regions.length === 0 ? (
+            <div className="py-12 text-center text-xs text-[#737373] dark:text-[#85858b]">
+              No regional records available
+            </div>
           ) : (
-            <div className="h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueSeries.slice(-12)} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="currentColor"
-                    className="text-slate-200/80 dark:text-white/[0.06]"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-slate-400 dark:text-slate-500 font-mono"
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-slate-400 dark:text-slate-500 font-mono"
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(val) => [formatNumber(Number(val)), 'Orders']}
-                    contentStyle={{
-                      backgroundColor: 'rgba(15, 20, 30, 0.95)',
-                      borderColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Bar dataKey="orders" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              {regions.map((r, idx) => {
+                const rev = Number(r.revenue) || 0;
+                const share = totalRegionalRev > 0 ? (rev / totalRegionalRev) * 100 : 0;
+                return (
+                  <div key={r.region} className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-2 text-xs">
+                      <span className="font-medium text-[#171717] dark:text-[#ededed]">
+                        {r.region}
+                      </span>
+                      <span className="font-mono tabular-nums font-medium text-[#171717] dark:text-[#ededed]">
+                        {formatCurrency(rev)}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-[#f4f4f5] dark:bg-[#232325] overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          idx === 0
+                            ? 'bg-[#2563eb] dark:bg-[#3b82f6]'
+                            : 'bg-[#a1a1a6] dark:bg-[#525252]'
+                        }`}
+                        style={{ width: `${Math.max(4, Math.min(100, share))}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-[#737373] dark:text-[#85858b] font-mono tabular-nums">
+                      <span>
+                        {r.customers} accounts · {r.orders} orders
+                      </span>
+                      <span>{share.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </Surface>
       </section>
 
-      {/* Secondary Strip: Top Products Table + Regional Distribution */}
+      {/* Secondary Strip: Top Products Table + Recent Inquiries */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <Surface className="xl:col-span-7 p-5">
-          <div className="flex items-center justify-between gap-3 mb-3">
+        <Surface className="xl:col-span-7 p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-                Top Products by Revenue
+              <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+                Top products by revenue
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Ranked by line-item realized revenue
+              <p className="text-xs text-[#737373] dark:text-[#85858b] mt-0.5">
+                Line-item realized sales and gross margin
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/dashboards')}
-              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
+              className="text-xs font-medium text-[#525252] dark:text-[#a1a1a6] hover:text-[#171717] dark:hover:text-[#ededed] whitespace-nowrap shrink-0 cursor-pointer transition-colors duration-150"
             >
               View catalog
             </button>
           </div>
 
           {loading ? (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
@@ -401,41 +386,41 @@ export function OverviewPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-white/[0.06] text-[11px] font-mono text-slate-400">
-                    <th className="pb-2 font-medium">Product</th>
-                    <th className="pb-2 px-3 text-right font-medium">Units</th>
-                    <th className="pb-2 px-3 text-right font-medium">Margin</th>
-                    <th className="pb-2 pl-3 text-right font-medium">Revenue</th>
+                  <tr className="border-b border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] text-xs font-mono text-[#737373] dark:text-[#85858b]">
+                    <th className="pb-2 font-normal">Product</th>
+                    <th className="pb-2 px-3 text-right font-normal">Units</th>
+                    <th className="pb-2 px-3 text-right font-normal">Margin</th>
+                    <th className="pb-2 pl-3 text-right font-normal">Revenue</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100/70 dark:divide-white/[0.04] text-xs">
+                <tbody className="divide-y divide-[#171717]/[0.06] dark:divide-[#ededed]/[0.06] text-xs">
                   {topProducts.map((p, idx) => (
                     <tr
                       key={p.product_id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                      className="hover:bg-[#fafafa] dark:hover:bg-[#232325]/40 transition-colors duration-150"
                     >
-                      <td className="py-2.5 pr-4">
-                        <div className="flex items-center gap-2">
-                          <span className="w-4.5 h-4.5 rounded text-[10px] font-mono font-semibold flex items-center justify-center bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 shrink-0">
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-3">
+                          <span className="w-5 text-xs font-mono tabular-nums text-[#737373] dark:text-[#85858b] shrink-0">
                             {idx + 1}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                            <p className="font-medium text-[#171717] dark:text-[#ededed] truncate">
                               {p.product_name}
                             </p>
-                            <span className="text-[10px] text-slate-400 font-sans">
+                            <span className="text-xs text-[#737373] dark:text-[#85858b]">
                               {p.category}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
+                      <td className="py-3 px-3 text-right font-mono tabular-nums text-[#525252] dark:text-[#a1a1a6]">
                         {formatNumber(p.units_sold)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
+                      <td className="py-3 px-3 text-right font-mono tabular-nums text-[#16a34a] dark:text-[#4cc38a]">
                         {Number.isFinite(p.margin_pct) ? p.margin_pct.toFixed(1) : '0.0'}%
                       </td>
-                      <td className="py-2.5 pl-3 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
+                      <td className="py-3 pl-3 text-right font-mono tabular-nums font-medium text-[#171717] dark:text-[#ededed]">
                         {formatCurrency(p.revenue)}
                       </td>
                     </tr>
@@ -446,94 +431,43 @@ export function OverviewPage() {
           )}
         </Surface>
 
-        <Surface className="xl:col-span-5 p-5">
-          <div className="mb-4">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-              Regional Sales Distribution
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Revenue proportion, customer base, and average ticket size
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="space-y-3.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {regions.map((r) => {
-                const rev = Number(r.revenue) || 0;
-                const share = totalRegionalRev > 0 ? (rev / totalRegionalRev) * 100 : 0;
-                return (
-                  <div key={r.region} className="space-y-1">
-                    <div className="flex items-baseline justify-between gap-2 text-xs">
-                      <span className="font-medium text-slate-800 dark:text-slate-200">
-                        {r.region}
-                      </span>
-                      <span className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
-                        {formatCurrency(r.revenue)}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300"
-                        style={{ width: `${Math.max(4, Math.min(100, share))}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono tabular-nums">
-                      <span>{r.customers} accounts · {r.orders} orders</span>
-                      <span>{share.toFixed(1)}% · AOV {formatCurrency(r.avg_order_value)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Surface>
-      </section>
-
-      {/* Bottom Strip: Recent Queries & Quick Prompts */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <Surface className="xl:col-span-7 p-5">
-          <div className="flex items-center justify-between gap-3 mb-3">
+        <Surface className="xl:col-span-5 p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-                Recent AI Analytical Inquiries
+              <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+                Recent queries
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Audit trail of natural language questions and execution metrics
+              <p className="text-xs text-[#737373] dark:text-[#85858b] mt-0.5">
+                Audit trail and latency
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/history')}
-              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 whitespace-nowrap shrink-0 cursor-pointer"
+              className="text-xs font-medium text-[#525252] dark:text-[#a1a1a6] hover:text-[#171717] dark:hover:text-[#ededed] whitespace-nowrap shrink-0 cursor-pointer transition-colors duration-150"
             >
-              Full log
+              View all
             </button>
           </div>
 
           {recentQueries.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              No queries logged yet. Launch a question in the AI Analyst to build audit history.
+            <div className="py-10 text-center text-xs text-[#737373] dark:text-[#85858b]">
+              No queries logged yet
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-white/[0.05]">
+            <div className="divide-y divide-[#171717]/[0.06] dark:divide-[#ededed]/[0.06]">
               {recentQueries.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => navigate(`/analyst?historyId=${item.id}`)}
-                  className="w-full py-2.5 text-left flex items-start justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] -mx-1 px-1 rounded-lg transition-colors cursor-pointer group"
+                  className="w-full py-3 text-left flex items-start justify-between gap-3 hover:bg-[#fafafa] dark:hover:bg-[#232325]/40 -mx-2 px-2 rounded-lg transition-colors duration-150 cursor-pointer group"
                 >
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-xs font-medium text-[#171717] dark:text-[#ededed] group-hover:text-[#2563eb] dark:group-hover:text-[#3b82f6] transition-colors duration-150 truncate">
                       {item.question}
                     </p>
-                    <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5 font-mono">
+                    <div className="text-xs text-[#737373] dark:text-[#85858b] flex flex-wrap items-center gap-2 font-mono">
                       <Badge
                         variant={
                           item.executionStatus === 'succeeded'
@@ -546,7 +480,6 @@ export function OverviewPage() {
                       >
                         {item.executionStatus}
                       </Badge>
-                      <span aria-hidden="true">·</span>
                       <span className="tabular-nums">{item.rowCount} rows</span>
                       <span aria-hidden="true">·</span>
                       <span className="tabular-nums">{item.executionTimeMs}ms</span>
@@ -554,40 +487,45 @@ export function OverviewPage() {
                       <span className="font-sans">{formatDateTime(item.createdAt)}</span>
                     </div>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0 mt-1" />
+                  <ArrowRight
+                    className="w-4 h-4 text-[#737373] dark:text-[#85858b] group-hover:text-[#171717] dark:group-hover:text-[#ededed] shrink-0 mt-0.5 transition-colors duration-150"
+                    strokeWidth={1.5}
+                  />
                 </button>
               ))}
             </div>
           )}
         </Surface>
-
-        <Surface className="xl:col-span-5 p-5">
-          <div className="mb-3">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white font-display">
-              Autonomous Prompt Deck
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Instant multi-agent SQL execution prompts
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            {QUICK_SUGGESTIONS.map((q) => (
-              <button
-                key={q}
-                type="button"
-                onClick={() => navigate(`/analyst?q=${encodeURIComponent(q)}`)}
-                className="w-full p-2.5 text-left flex items-center justify-between gap-2.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.06] hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 text-slate-700 dark:text-slate-300 transition-all cursor-pointer group"
-              >
-                <span className="leading-snug truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                  {q}
-                </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0" />
-              </button>
-            ))}
-          </div>
-        </Surface>
       </section>
+
+      {/* Quick Prompts */}
+      <Surface className="p-6">
+        <div className="mb-4">
+          <h2 className="text-base font-medium text-[#171717] dark:text-[#ededed]">
+            Suggested queries
+          </h2>
+          <p className="text-xs text-[#737373] dark:text-[#85858b] mt-0.5">
+            Run a preset inquiry directly in the AI Analyst
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {QUICK_SUGGESTIONS.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => navigate(`/analyst?q=${encodeURIComponent(q)}`)}
+              className="p-3 text-left flex items-center justify-between gap-2 text-xs rounded-lg border border-[#171717]/[0.08] dark:border-[#ededed]/[0.08] bg-[#fafafa] dark:bg-[#141415] hover:border-[#171717]/[0.18] dark:hover:border-[#ededed]/[0.18] text-[#171717] dark:text-[#ededed] transition-colors duration-150 cursor-pointer group"
+            >
+              <span className="truncate">{q}</span>
+              <ArrowUpRight
+                className="w-4 h-4 text-[#737373] dark:text-[#85858b] group-hover:text-[#2563eb] dark:group-hover:text-[#3b82f6] shrink-0 transition-colors duration-150"
+                strokeWidth={1.5}
+              />
+            </button>
+          ))}
+        </div>
+      </Surface>
     </div>
   );
 }

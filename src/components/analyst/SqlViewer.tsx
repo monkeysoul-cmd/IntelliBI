@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Copy, ShieldAlert, ShieldCheck, Terminal } from 'lucide-react';
+import { Check, Copy, Terminal } from 'lucide-react';
 import type { SqlValidationPayload } from '../../types/api';
 import { Badge } from '../ui/Primitives';
 
@@ -28,52 +28,45 @@ export function SqlViewer({
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      // Fallback
+      // Fallback ignored
     }
   };
 
   const isPassed = validation?.isValid !== false;
 
   return (
-    <div className="rounded-xl border border-slate-200/90 dark:border-white/[0.08] overflow-hidden bg-[#0A0D14] text-slate-200 shadow-sm">
-      {/* Terminal Title Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-[#0E121B] border-b border-white/[0.07] text-xs select-none">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Mac-style subtle dots */}
-          <div className="flex items-center gap-1.5 mr-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
-          </div>
+      <div className="rounded-lg border border-[#171717]/[0.1] dark:border-[#ededed]/[0.08] overflow-hidden bg-[#0f0f10] text-[#ededed]">
+        {/* Terminal Title Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#161618] border-b border-[#ededed]/[0.08] text-xs select-none">
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 text-[#a1a1a6] font-mono">
+                  <Terminal className="w-4 h-4 text-[#85858b]" strokeWidth={1.5} />
+                  <span className="font-medium text-[#ededed]">SQL AST</span>
+                </div>
 
-          <div className="flex items-center gap-1.5 text-slate-300 font-mono text-[11px]">
-            <Terminal className="w-3.5 h-3.5 text-blue-400" />
-            <span className="font-semibold text-slate-100">SQL AST</span>
-          </div>
+                  <span className="text-[#ededed]/20" aria-hidden="true">
+                    ·
+                  </span>
 
-          <span className="text-white/20" aria-hidden="true">
-            ·
-          </span>
+                  <Badge variant={isPassed ? 'emerald' : 'rose'} dot>
+                    {isPassed ? 'Read-only verified' : 'Blocked by AST guard'}
+                  </Badge>
 
-          <Badge variant={isPassed ? 'emerald' : 'rose'} dot>
-            {isPassed ? 'Read-only verified' : 'Blocked by AST guard'}
-          </Badge>
-
-          {typeof executionTimeMs === 'number' && executionTimeMs > 0 && (
-            <span className="font-mono tabular-nums text-[11px] text-slate-400">
-              {executionTimeMs}ms
-            </span>
+                  {typeof executionTimeMs === 'number' && executionTimeMs > 0 && (
+                      <span className="font-mono tabular-nums text-xs text-[#85858b]">
+                        {executionTimeMs}ms
+                      </span>
           )}
 
-          {typeof rowCount === 'number' && (
-            <span className="font-mono tabular-nums text-[11px] text-slate-400">
+                      {typeof rowCount === 'number' && (
+            <span className="font-mono tabular-nums text-xs text-[#85858b]">
               {rowCount} {rowCount === 1 ? 'row' : 'rows'}
             </span>
           )}
 
           {typeof retryCount === 'number' && retryCount > 0 && (
             <Badge variant="amber">
-              {retryCount} self-correction{retryCount > 1 ? 's' : ''}
+              {retryCount} correction{retryCount > 1 ? 's' : ''}
             </Badge>
           )}
         </div>
@@ -82,16 +75,16 @@ export function SqlViewer({
           type="button"
           onClick={handleCopy}
           aria-label="Copy SQL query"
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium font-mono text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded text-xs font-mono text-[#a1a1a6] hover:text-[#ededed] bg-[#232325] hover:bg-[#2c2c2f] transition-colors duration-150 cursor-pointer"
         >
           {copied ? (
             <>
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400">Copied</span>
+              <Check className="w-3.5 h-3.5 text-[#4cc38a]" strokeWidth={1.5} />
+              <span className="text-[#4cc38a]">Copied</span>
             </>
           ) : (
             <>
-              <Copy className="w-3 h-3 text-slate-400" />
+              <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />
               <span>Copy</span>
             </>
           )}
@@ -99,17 +92,17 @@ export function SqlViewer({
       </div>
 
       {/* Code Body */}
-      <div className="p-3.5 overflow-x-auto">
-        <pre className="font-mono text-xs leading-relaxed text-blue-100/90 selection:bg-blue-600/30">
-          <code>{sql}</code>
-        </pre>
-      </div>
+                      <div className="p-4 overflow-x-auto">
+                        <pre className="font-mono text-xs leading-relaxed text-[#ededed]/90 selection:bg-[#2563eb]/30">
+                          <code>{sql}</code>
+                        </pre>
+                      </div>
 
-      {explanation && (
-        <div className="px-3.5 py-2 bg-white/[0.02] border-t border-white/[0.05] text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-300">Plan:</span> {explanation}
-        </div>
+                      {explanation && (
+                          <div className="px-4 py-2.5 bg-[#141415] border-t border-[#ededed]/[0.06] text-xs text-[#a1a1a6]">
+                            <span className="font-medium text-[#ededed]">Plan:</span> {explanation}
+                          </div>
       )}
-    </div>
-  );
+                        </div>
+                      );
 }
